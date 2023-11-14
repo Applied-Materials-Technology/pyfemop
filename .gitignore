@@ -140,3 +140,6 @@ dmypy.json
 
 # MacOS
 .DS_Store
+
+#Test data
+/home/rspencer/mtgo/src/mtgo/gmshutils/gmsh_script_mod.geo
