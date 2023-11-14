@@ -4,7 +4,7 @@
 
 import os
 
-def RunGmsh(input_file):
+def RunGmsh(gmsh_path,input_file):
     """Run the .geo file given
 
     Args:
@@ -17,5 +17,5 @@ def RunGmsh(input_file):
     if not os.path.exists(input_file):
         raise FileNotFoundError('File not found.')
     
-    call_string = '/home/rspencer/src/gmsh/bin/gmsh {}'.format(input_file)
+    call_string = '{} {}'.format(gmsh_path,input_file)
     os.system(call_string)

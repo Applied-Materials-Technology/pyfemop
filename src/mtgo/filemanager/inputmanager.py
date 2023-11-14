@@ -98,7 +98,7 @@ class InputModifier:
                 if index > self.var_start and index < self.var_end:
                     current_var = index-self.var_start-1
                     #print(current_var)
-                    write_string = '{} = {}{}\n'.format(keys[current_var],values[current_var],)
+                    write_string = '{} = {}{}\n'.format(keys[current_var],values[current_var],self.end_char)
                     out_file.write(write_string)
                     continue
                 else:
