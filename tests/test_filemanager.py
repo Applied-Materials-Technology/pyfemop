@@ -3,10 +3,10 @@
 #
 
 import pytest
-from mtgo.filemanager.inputmanager import InputModifier
+from mtgo.filemanager import InputModifier
 
 def test_inputmanager():
-    input_file = '/home/rspencer/mtgo/src/mtgo/gmshutils/gmsh_script.geo'
+    input_file = '/home/rspencer/mtgo/data/gmsh_script.geo'
     im = InputModifier(input_file,'//',';')
     print(type(im.var_start))
     print(im._vars)
@@ -18,7 +18,7 @@ def test_inputmanager():
     assert im._vars['p2'] == pytest.approx(1.2e-3)
 
 def test_update():
-    input_file = '/home/rspencer/mtgo/src/mtgo/gmshutils/gmsh_script.geo'
+    input_file = '/home/rspencer/mtgo/data/gmsh_script.geo'
     im = InputModifier(input_file,'//',';')
     
     new_bad_dict = {'p0':3.0,'t1':40.,'p2':50.}
@@ -33,9 +33,9 @@ def test_update():
         im.update_vars(new_bad_dict)
 
 def test_write():
-    input_file = '/home/rspencer/mtgo/src/mtgo/gmshutils/gmsh_script.geo'
+    input_file = '/home/rspencer/mtgo/data/gmsh_script.geo'
     im = InputModifier(input_file,'//',';')
-    output_file = '/home/rspencer/mtgo/src/mtgo/gmshutils/gmsh_script_mod.geo'
+    output_file = '/home/rspencer/mtgo/data/gmsh_script_mod.geo'
     
     new_good_dict = {'p0':2.,'p1':3.,'p2':4.}
     im.update_vars(new_good_dict)

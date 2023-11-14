@@ -10,12 +10,12 @@ gaugeWidth = 2.5E-3;
 
 // Parameterisation
 //_*
-p0 = 2.0
-p1 = 3.0
-p2 = 4.0
+p0 = 1.5E-3;
+p1 = 1E-3;
+p2 = 1.2E-3;
 //**
 lc = 1E-4;
-filename = "mesh_out.msh"
+filename = "mesh_out.msh";
 
 
 // Create some points defining the boundary
