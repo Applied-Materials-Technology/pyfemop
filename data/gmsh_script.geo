@@ -15,7 +15,7 @@ p1 = 1E-3;
 p2 = 1.2E-3;
 //**
 lc = 1E-4;
-filename = "mesh_out.msh";
+filename = "test_mesh.msh";
 
 
 // Create some points defining the boundary
@@ -57,3 +57,5 @@ Physical Curve("Top-BC",2) = {3};
 Physical Curve("Mid-BC",3) = {4};
 Physical Curve("Btm-BC",4) = {1};
 
+Save Str(filename);
+Exit;
