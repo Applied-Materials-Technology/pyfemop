@@ -5,6 +5,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from pymoo.core.problem import Problem
+from pymoo.problems.static import StaticProblem
+from pymoo.core.evaluator import Evaluator
 from pymoo.algorithms.soo.nonconvex.pso import PSO
 from pymoo.termination import get_termination
 from pymoo.termination.default import DefaultMultiObjectiveTermination
@@ -20,6 +22,12 @@ from mtgo.optimizationmanager.dummysolver import dummy_solve_moo
 from mtgo.optimizationmanager.dummysolver import sphere
 from mtgo.optimizationmanager.dummysolver import rastigrin
 from mtgo.optimizationmanager.dummysolver import rosen
+
+from mtgo.optimizationmanager.costfunctions import CostFunction
+from mtgo.optimizationmanager.costfunctions import min_plastic
+from mtgo.optimizationmanager.costfunctions import creep_range
+
+from mooseherder.mooseherd import MooseHerd
 
 # First step is to define a problem. 
 #%%
@@ -135,4 +143,96 @@ res = minimize(problem,
 X = res.X
 F = res.F
 
+# %%
+class TestProblem(Problem):
+
+    def __init__(self):
+        super().__init__(n_var=3,
+                         n_obj=2,
+                         xl=np.array([1E-3,1E-3,1E-3]),
+                         xu=np.array([2.5E-3,2.5E-3,2.5E-3]))
+
+    def _evaluate(self, x, out, *args, **kwargs):
+
+        
+        #Run 
+        
+        # Read
+        filename = '/home/rspencer/mooseherder/examples/creep_mesh_test_dev_out.csv'
+        data = output_csv_reader(filename)
+        # Calculate
+        c = CostFunction(data,[min_plastic,creep_range])
+        out["F"] = c(data)
+        #out["G"] = [g1, g2]
+
+
+problem = TestProblem()
+algorithm = NSGA2(
+    pop_size=8,
+    n_offsprings=10,
+    sampling=FloatRandomSampling(),
+    crossover=SBX(prob=0.9, eta=15),
+    mutation=PM(eta=20),
+    eliminate_duplicates=True
+)
+termination = get_termination("n_gen", 1)
+res = minimize(problem,
+               algorithm,
+               termination,
+               seed=1,
+               save_history=True,
+               verbose=True)
+
+X = res.X
+F = res.F
+
+#%% Problem independent way 
+
+
+
+problem = Problem(n_var=2,
+                  n_obj=2,
+                  xl=np.array([-2,-2]),
+                  xu=np.array([2,2]))
+
+
+algorithm = NSGA2(
+    pop_size=8,
+    n_offsprings=10,
+    sampling=FloatRandomSampling(),
+    crossover=SBX(prob=0.9, eta=15),
+    mutation=PM(eta=20),
+    eliminate_duplicates=True,
+    save_history = True
+)
+
+termination = get_termination("n_gen", 40)
+
+algorithm.setup(problem,termination=termination)
+
+for n_gen in range(40):
+    # Ask for the next solution to be implemented
+    pop = algorithm.ask()
+    
+    #Get parameters
+    x = pop.get("X")
+    #print(x)
+    #print(x[0,1])
+
+    F=dummy_solve_moo(x)
+
+    static = StaticProblem(problem,F=F)
+    Evaluator().eval(static,pop)
+
+    algorithm.tell(infills=pop)
+    print(algorithm.n_gen)
+
+res = algorithm.result()
+X = res.X
+F = res.F
+
+
+# %%
+#plt.scatter(X[:,0],X[:,1])
+plt.scatter(F[:,0],F[:,1])
 # %%

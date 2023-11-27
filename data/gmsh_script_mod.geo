@@ -10,9 +10,9 @@ gaugeWidth = 2.5E-3;
 
 // Parameterisation
 //_*
-p0 = 0.002;
-p1 = 0.003;
-p2 = 0.001;
+p0 = 2.0;
+p1 = 3.0;
+p2 = 4.0;
 //**
 lc = 1E-4;
 filename = "test_mesh.msh";

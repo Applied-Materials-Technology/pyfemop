@@ -32,8 +32,8 @@ def dummy_solve_moo(x):
     f1 = np.empty(x.shape[0])
     f2 = np.empty(x.shape[0])
     for i in range(len(f1)):
-        f1[i] = 100 * (x[0]**2 + x[1]**2)
-        f2[i] = (x[0]-1)**2 + x[1]**2
+        f1[i] = 100 * (x[i,0]**2 + x[i,1]**2)
+        f2[i] = (x[i,0]-1)**2 + x[i,1]**2
     return [f1,f2]
 
 def rosen(x):
