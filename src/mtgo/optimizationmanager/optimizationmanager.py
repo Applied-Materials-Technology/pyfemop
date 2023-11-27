@@ -28,6 +28,7 @@ from mtgo.optimizationmanager.costfunctions import min_plastic
 from mtgo.optimizationmanager.costfunctions import creep_range
 
 from mooseherder.mooseherd import MooseHerd
+from mooseherder.inputmodifier import InputModifier
 
 # First step is to define a problem. 
 #%%
@@ -190,10 +191,10 @@ F = res.F
 
 
 
-problem = Problem(n_var=2,
+problem = Problem(n_var=3,
                   n_obj=2,
-                  xl=np.array([-2,-2]),
-                  xu=np.array([2,2]))
+                  xl=np.array([1E-3,1E-3,1E-3]),
+                  xu=np.array([2.5E-3,2.5E-3,2.5E-3]))
 
 
 algorithm = NSGA2(
@@ -210,26 +211,55 @@ termination = get_termination("n_gen", 40)
 
 algorithm.setup(problem,termination=termination)
 
-for n_gen in range(40):
+moose_dir = '/home/rspencer/moose'
+app_dir = '/home/rspencer/proteus'
+app_name = 'proteus-opt'
+
+input_file = 'examples/creep_mesh_test.i'
+
+geo_file = '/home/rspencer/mooseherder/data/gmsh_script_3d.geo'
+
+input_modifier = InputModifier(geo_file,'//',';')
+#input_modifier = InputModifier(input_file,'#','')
+# Start the herd and create working directories
+herd = MooseHerd(input_file,moose_dir,app_dir,app_name,input_modifier)
+herd.clear_dirs()
+herd.create_dirs(one_dir=False)
+herd.para_opts(n_moose=8,tasks_per_moose=1,threads_per_moose=1)
+
+
+# Run in parallel
+#herd.run_para(para_vars)
+#print()
+#print('------------------------------------------')
+#print('Run time = '+str(herd._run_time)+' seconds')
+#print('------------------------------------------')
+
+for n_gen in range(1):
     # Ask for the next solution to be implemented
     pop = algorithm.ask()
     
     #Get parameters
     x = pop.get("X")
-    #print(x)
-    #print(x[0,1])
+    
+    #Run moose for all x.
+    #Moose herder needs list of dicts. With correctly named parameters. 
+    para_vars = list()
+    for i in range(x.shape[0]):
+        para_vars.append({'p0':x[i,0],'p1':x[i,1],'p2':x[i,2]})
+    print(para_vars)
+    #F=dummy_solve_moo(x)
+    herd.run_para(para_vars)
 
-    F=dummy_solve_moo(x)
+    #static = StaticProblem(problem,F=F)
+    #Evaluator().eval(static,pop)
 
-    static = StaticProblem(problem,F=F)
-    Evaluator().eval(static,pop)
+    #algorithm.tell(infills=pop)
+    #print(algorithm.n_gen)
 
-    algorithm.tell(infills=pop)
-    print(algorithm.n_gen)
-
-res = algorithm.result()
-X = res.X
-F = res.F
+#res = algorithm.result()
+#X = res.X
+#F = res.F
 
 
 # %%
