@@ -30,4 +30,3 @@ def test_costfunction():
     assert output_values[0] == pytest.approx(3.335469E-5)
     assert output_values[1] == pytest.approx(-0.005906137)
 
-    

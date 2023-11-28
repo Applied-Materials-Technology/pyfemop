@@ -29,6 +29,7 @@ from mtgo.optimizationmanager.costfunctions import creep_range
 
 from mooseherder.mooseherd import MooseHerd
 from mooseherder.inputmodifier import InputModifier
+from mooseherder.outputreader import output_csv_reader
 
 # First step is to define a problem. 
 #%%
@@ -71,7 +72,7 @@ hist_F = []
 for algo in hist:
     n_evals.append(algo.evaluator.n_eval)
     hist_F.append(algo.opt.get("F"))
-#%%
+#%% Dummy problem
 
 class DummyProblem(Problem):
 
@@ -199,7 +200,7 @@ problem = Problem(n_var=3,
 
 algorithm = NSGA2(
     pop_size=8,
-    n_offsprings=10,
+    n_offsprings=8,
     sampling=FloatRandomSampling(),
     crossover=SBX(prob=0.9, eta=15),
     mutation=PM(eta=20),
@@ -215,7 +216,7 @@ moose_dir = '/home/rspencer/moose'
 app_dir = '/home/rspencer/proteus'
 app_name = 'proteus-opt'
 
-input_file = 'examples/creep_mesh_test.i'
+input_file = 'examples/creep_mesh_test_dev.i'
 
 geo_file = '/home/rspencer/mooseherder/data/gmsh_script_3d.geo'
 
@@ -227,42 +228,71 @@ herd.clear_dirs()
 herd.create_dirs(one_dir=False)
 herd.para_opts(n_moose=8,tasks_per_moose=1,threads_per_moose=1)
 
-
-# Run in parallel
-#herd.run_para(para_vars)
-#print()
-#print('------------------------------------------')
-#print('Run time = '+str(herd._run_time)+' seconds')
-#print('------------------------------------------')
-
-for n_gen in range(1):
+for n_gen in range(5):
     # Ask for the next solution to be implemented
     pop = algorithm.ask()
     
     #Get parameters
     x = pop.get("X")
-    
+    #print(x)
     #Run moose for all x.
     #Moose herder needs list of dicts. With correctly named parameters. 
     para_vars = list()
     for i in range(x.shape[0]):
         para_vars.append({'p0':x[i,0],'p1':x[i,1],'p2':x[i,2]})
     print(para_vars)
-    #F=dummy_solve_moo(x)
+    
     herd.run_para(para_vars)
+    print('Run time = '+str(herd._run_time)+' seconds')
 
-    #static = StaticProblem(problem,F=F)
-    #Evaluator().eval(static,pop)
+    # Read in moose results and get cost. 
+    data_list = herd.read_results(output_csv_reader,'csv')
+    output_values = []
+    for data in data_list:
+        c = CostFunction(data,[min_plastic,creep_range])
+        output_values.append(c.evaluate())
+    # Format of f needs to be list of len (n_obj) with arrays of len(num_parts)
+    costs = np.array(output_values)
+    F = []
+    for i in range(costs.shape[1]):
+        F.append(costs[:,i])
+    print(F)
 
-    #algorithm.tell(infills=pop)
-    #print(algorithm.n_gen)
+    static = StaticProblem(problem,F=F)
+    Evaluator().eval(static,pop)
 
-#res = algorithm.result()
-#X = res.X
-#F = res.F
+    algorithm.tell(infills=pop)
+    print(algorithm.n_gen)
+    #herd.clear_dirs()
+
+res = algorithm.result()
+X = res.X
+S = res.F
+
 
 
 # %%
-#plt.scatter(X[:,0],X[:,1])
-plt.scatter(F[:,0],F[:,1])
+plt.scatter(X[:,0],X[:,1])
+#plt.scatter(F[:,0],F[:,1])
+# %%
+filename = '/home/rspencer/mooseherder/examples/creep_mesh_test_dev_out.csv'
+od = []
+od.append(output_csv_reader(filename))
+od.append(output_csv_reader(filename))
+od.append(output_csv_reader(filename))
+print(od)
+ov = []
+for data in od:
+    c = CostFunction(data,[min_plastic,creep_range])
+    ov.append(c.evaluate())
+print(ov)
+
+# %%
+#Convert to numpy array first
+costs = np.array(ov)
+F = []
+for i in range(costs.shape[1]):
+    F.append(costs[:,i])
+
+print(F)
 # %%

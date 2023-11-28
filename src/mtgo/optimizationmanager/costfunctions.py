@@ -29,6 +29,7 @@ class CostFunction():
 # Define some functions to use as trials
 
 def min_plastic(data):
+    # Maybe add a check that time == 100 to ensure run completed.
     return data['max_plas_strain']
 
 def creep_range(data):
