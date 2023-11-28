@@ -31,6 +31,9 @@ from mooseherder.mooseherd import MooseHerd
 from mooseherder.inputmodifier import InputModifier
 from mooseherder.outputreader import output_csv_reader
 
+from pymoo.visualization.heatmap import Heatmap
+
+
 # First step is to define a problem. 
 #%%
 class SphereProblem(Problem):
@@ -272,8 +275,8 @@ S = res.F
 
 
 # %%
-plt.scatter(X[:,0],X[:,1])
-#plt.scatter(F[:,0],F[:,1])
+#plt.scatter(X[:,0],X[:,1])
+plt.scatter(S[:,0],S[:,1])
 # %%
 filename = '/home/rspencer/mooseherder/examples/creep_mesh_test_dev_out.csv'
 od = []
@@ -295,4 +298,16 @@ for i in range(costs.shape[1]):
     F.append(costs[:,i])
 
 print(F)
+# %% Get some history
+hist = res.history
+n_evals = []
+hist_F = []
+
+for algo in hist:
+    n_evals.append(algo.evaluator.n_eval)
+    hist_F.append(algo.opt.get("F"))
+
+# %% Try to visualise
+Heatmap().add(S).show()
+
 # %%

@@ -30,7 +30,15 @@ class CostFunction():
 
 def min_plastic(data):
     # Maybe add a check that time == 100 to ensure run completed.
-    return data['max_plas_strain']
+    if data["time"] == 100:
+        cost = data['max_plas_strain']
+    else:
+        cost = 10
+    return cost
 
 def creep_range(data):
-    return -1*(data['max_creep_strain']-data['min_creep_strain'])
+    if data["time"] == 100:
+        cost = -1*(data['max_creep_strain']-data['min_creep_strain'])
+    else:
+        cost = 10
+    return cost
