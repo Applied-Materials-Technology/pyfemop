@@ -36,17 +36,19 @@ import pickle
 
 class MooseOptimizationRun():
 
-    def __init__(self,algorithm,termination,herd,cost_function,bounds):
+    def __init__(self,name,algorithm,termination,herd,cost_function,bounds):
         """Class to contain everything needed for an optimization run 
         with moose. Should be pickle-able.
 
         Args:
+            name (str) : string to name the run.
             algorithm (pymoo algorithm): Choice of algorithm for the optimization
             termination (pymoo termination): Termination criteria for the algorithm
             herd (MooseHerd): MooseHerd instance for the run.
             costfunction (CostFunction): CostFunction instance.
             bounds (tuple): 2-tuple containing lower and upper bounds as arrays
         """
+        self._name = name
         self._algorithm = algorithm
         self._herd = herd
         self._cost_function = cost_function
@@ -62,6 +64,14 @@ class MooseOptimizationRun():
         
         # Setup algorithm
         self._algorithm.setup(self._problem,termination=termination)
+
+    def backup(self):
+        """Create a pickle dump of the class instance.
+        """
+        pickle_path = self._herd._input_dir + '/' + self._name.replace(' ','_').replace('.','_') + '.pickle'
+        #print(pickle_path)
+        with open(pickle_path,'wb') as f:
+            pickle.dump(self,f,pickle.HIGHEST_PROTOCOL)
 
 
     def run(self,num_its):
@@ -109,7 +119,7 @@ class MooseOptimizationRun():
             Evaluator().eval(static,pop)
 
             self._algorithm.tell(infills=pop)
-
+            self.backup()
 
     
 

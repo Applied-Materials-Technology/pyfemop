@@ -43,3 +43,10 @@ def creep_range(data):
     else:
         cost = 10
     return cost
+
+def max_stress(data):
+    if data["time"] == 100:
+        cost = -1*(data['max_stress'])
+    else:
+        cost = 10
+    return cost

@@ -4,6 +4,7 @@
 
 import pytest
 import numpy as np
+import os
 
 from mtgo.optimizationmanager.optimizationmanager import MooseOptimizationRun
 from pymoo.algorithms.moo.nsga2 import NSGA2
@@ -17,6 +18,7 @@ from mtgo.optimizationmanager.costfunctions import CostFunction
 from mtgo.optimizationmanager.costfunctions import min_plastic
 from mtgo.optimizationmanager.costfunctions import creep_range
 from pymoo.termination import get_termination
+
 
 def test_class_init():
 
@@ -48,9 +50,58 @@ def test_class_init():
     c = CostFunction([min_plastic,creep_range])
     bounds  =(np.array([1E-3,1E-3,1E-3]),np.array([2.5E-3,2.5E-3,2.5E-3]))
 
-    mor = MooseOptimizationRun(algorithm,termination,herd,c,bounds)
-    
+    mor = MooseOptimizationRun('TestInit',algorithm,termination,herd,c,bounds)
+    mor.backup()
     assert mor._n_obj ==2
     assert mor._n_var ==3
     assert mor._problem.xl == pytest.approx([1E-3,1E-3,1E-3])
     assert mor._problem.xu == pytest.approx([2.5E-3,2.5E-3,2.5E-3])
+
+def test_class_backup():
+    """Test that the pickled backup file correctly removes 
+    disallowed characters and spaces.
+    """
+
+    moose_dir = '/home/rspencer/moose'
+    app_dir = '/home/rspencer/proteus'
+    app_name = 'proteus-opt'
+
+    input_file = 'examples/creep_mesh_test_dev.i'
+
+    geo_file = '/home/rspencer/mooseherder/data/gmsh_script_3d.geo'
+
+    input_modifier = InputModifier(geo_file,'//',';')
+
+    herd = MooseHerd(input_file,moose_dir,app_dir,app_name,input_modifier)
+    herd.clear_dirs()
+    herd.create_dirs(one_dir=False)
+    herd.para_opts(n_moose=8,tasks_per_moose=1,threads_per_moose=1)
+    
+    algorithm = NSGA2(
+    pop_size=8,
+    n_offsprings=8,
+    sampling=FloatRandomSampling(),
+    crossover=SBX(prob=0.9, eta=15),
+    mutation=PM(eta=20),
+    eliminate_duplicates=True,
+    save_history = True
+    )
+    termination = get_termination("n_gen", 40)
+    c = CostFunction([min_plastic,creep_range])
+    bounds  =(np.array([1E-3,1E-3,1E-3]),np.array([2.5E-3,2.5E-3,2.5E-3]))
+
+    mor = MooseOptimizationRun('Test Init 1',algorithm,termination,herd,c,bounds)
+    mor.backup()
+    assert os.path.exists('examples/Test_Init_1.pickle')
+
+    mor = MooseOptimizationRun('Test.Init.2',algorithm,termination,herd,c,bounds)
+    mor.backup()
+    assert os.path.exists('examples/Test_Init_2.pickle')
+
+    mor = MooseOptimizationRun('Test.Init 3',algorithm,termination,herd,c,bounds)
+    mor.backup()
+    assert os.path.exists('examples/Test_Init_3.pickle')
+ 
+    os.remove('examples/Test_Init_1.pickle')
+    os.remove('examples/Test_Init_2.pickle')
+    os.remove('examples/Test_Init_3.pickle')

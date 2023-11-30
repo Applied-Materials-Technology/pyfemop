@@ -8,7 +8,7 @@
   
   [Mesh]
     type = FileMesh
-    file = 'test_mesh.msh'
+    file = '/home/rspencer/mtgo/data/test_mesh.msh'
   []
   
   [Modules/TensorMechanics/Master]
@@ -24,18 +24,18 @@
     [./top_pull]
       type = PiecewiseLinear
       x = '  0   0.5  100   '
-      y = '-0E6 -50E6  -50E6' 
+      y = '-0 -0.05  -0.05' 
     [../]
   
     [./dts]
       type = PiecewiseLinear
-      x = '0        0.5    1.0 100'
-      y = '0.02  0.02  1  1'
+      x = '0  0.5E3    1.0E3 2.16E7'
+      y = '20  20  5E5  5E5'
     [../]
 
     [./swift]
         type = ParsedFunction
-        expression = '400E6*(1E-3 +x)^0.1'
+        expression = '0.4*(1E-3 +x)^0.1'
     [../]
   []
   
@@ -71,7 +71,7 @@
     [./elasticity_tensor]
       type = ComputeIsotropicElasticityTensor
       #block = 1
-      youngs_modulus = 1e11
+      youngs_modulus = 100
       poissons_ratio = 0.3
     [../]
     #[./compute_stress]
@@ -82,21 +82,21 @@
       tangent_operator = elastic
       inelastic_models = 'creep plas'
       max_iterations = 50
-      absolute_tolerance = 1e-06
+      absolute_tolerance = 1E3#1e-06
       #combined_inelastic_strain_weights = '0.0 1.0'
     [../]
     [./creep]
       type = PowerLawCreepStressUpdate
-      coefficient = 1e-45
-      n_exponent = 5
-      m_exponent = -0.5
+      coefficient = 2.1119#10.559
+      n_exponent = 6.832
+      m_exponent = -0.8
       activation_energy = 0
     [../]
     [./plas]
       type = IsotropicPlasticityStressUpdate
       #hardening_constant = 100E6
       hardening_function = swift
-      yield_stress = 200E6
+      yield_stress = 0.2#200E6
     [../]
   []
   
@@ -114,13 +114,13 @@
     automatic_scaling = True
     l_max_its = 20
     nl_max_its = 6
-    nl_rel_tol = 1e-8
-    nl_abs_tol = 1e-8
-    l_tol = 1e-8
-    l_abs_tol = 1E-8
+    nl_rel_tol = 1e-5
+    nl_abs_tol = 1e-5
+    l_tol = 1e-5
+    l_abs_tol = 1E-5
     start_time = 0.0
-    end_time = 100
-    dtmin =1E-3
+    end_time = 2.16E7
+    dtmin =1
   
     [./TimeStepper]
       type = FunctionDT

@@ -6,6 +6,12 @@ __pycache__/
 # Moose stuff
 examples/moose*
 
+# Anything pickled
+*.pickle
+
+# Moose outpus
+*.e
+
 # C extensions
 *.so
 
