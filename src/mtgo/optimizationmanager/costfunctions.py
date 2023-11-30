@@ -5,7 +5,7 @@
 
 class CostFunction():
 
-    def __init__(self,functions):
+    def __init__(self,functions,endtime):
         """_summary_
 
         Args:
@@ -15,6 +15,7 @@ class CostFunction():
         #self._data = data
         self._functions = functions
         self.n_obj = len(self._functions)
+        self._endtime = endtime
 
     def evaluate(self,data):
         """Calculate the cost of each function, to pass back to pymoo

@@ -50,12 +50,12 @@ bounds  =(np.array([1.2,1.2,1.2]),np.array([2.5,2.5,2.5]))
 
 mor = MooseOptimizationRun('Run_Stress_plastic_gpa',algorithm,termination,herd,c,bounds)
 
-mor.run(5)
+mor.run(1)
 
 
 
 #%% Test pickling
-pickle_path = '/home/rspencer/mtgo/examples/Run_Stress_plastic_2.pickle'
+pickle_path = '/home/rspencer/mtgo/examples/Run_Stress_plastic_gpa.pickle'
 with open(pickle_path,'rb') as f:
     morl = pickle.load(f,encoding='latin-1')
 
