@@ -5,17 +5,18 @@
 
 class CostFunction():
 
-    def __init__(self,data,functions):
+    def __init__(self,functions):
         """_summary_
 
         Args:
             data (dict): Data used to calculated cost functions
             functions (list): List of defined functions using the values in data.
         """
-        self._data = data
+        #self._data = data
         self._functions = functions
+        self.n_obj = len(self._functions)
 
-    def evaluate(self):
+    def evaluate(self,data):
         """Calculate the cost of each function, to pass back to pymoo
         
         Returns:
@@ -23,7 +24,7 @@ class CostFunction():
         """
         f= []
         for function in self._functions:
-            f.append(function(self._data))
+            f.append(function(data))
         return f
 
 # Define some functions to use as trials

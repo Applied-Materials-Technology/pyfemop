@@ -120,7 +120,7 @@
     l_abs_tol = 1E-8
     start_time = 0.0
     end_time = 100
-    dtmin =1E-4
+    dtmin =1E-3
   
     [./TimeStepper]
       type = FunctionDT
