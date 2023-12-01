@@ -86,7 +86,7 @@ class MooseOptimizationRun():
             if not self._algorithm.has_next():
                 # Kill the loop if the algorithm has terminated.
                 break
-
+            print('*****Running Optimization Generation {}*****'.format(self._algorithm.n_gen))
             # Ask for the next solution to be implemented
             pop = self._algorithm.ask()
             
@@ -103,6 +103,7 @@ class MooseOptimizationRun():
             print('Run time = '+str(self._herd._run_time)+' seconds')
 
             # Read in moose results and get cost. 
+            print('*****Reading Data*****')
             data_list = self._herd.read_results(output_csv_reader,'csv')
             output_values = []
             for data in data_list:
@@ -120,6 +121,34 @@ class MooseOptimizationRun():
 
             self._algorithm.tell(infills=pop)
             self.backup()
+            print('**** Generation Complete ****')
 
     
+    def run_optimal(self,pf_nums):
+        """Run a model from the pareto front
 
+        Args:
+            pf_num (list of int): Integer of the pareto front optimum to run.
+        """
+        
+        f = self._algorithm.result().F[pf_nums] 
+        x = self._algorithm.result().X[pf_nums]
+        
+        print('The selected parameters are: {}'.format(x))
+        print('The pareto front position is: {}'.format(f))
+
+        # Create runner
+        # Temp herder
+        temp_herd = MooseHerd(self._herd.input_file,self._herd._runner.moose_dir,self._herd._runner.app_dir,self._herd._runner.app_name,self._herd._modifier)
+        temp_herd.clear_dirs()
+        # There's some kind of bug with create_dirs, doesn' create via para_opts
+        temp_herd.create_dirs(one_dir=False,sub_dir='moose-opt')
+        temp_herd.para_opts(n_moose=len(pf_nums),tasks_per_moose=1,threads_per_moose=1)
+        
+        para_vars = list()
+        for i in range(x.shape[0]):
+            para_vars.append({'p0':x[i,0],'p1':x[i,1],'p2':x[i,2]})
+        
+        print('**** Running Selected Models ****')
+        temp_herd.run_para(para_vars)  
+        

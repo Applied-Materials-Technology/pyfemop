@@ -25,29 +25,29 @@ class CostFunction():
         """
         f= []
         for function in self._functions:
-            f.append(function(data))
+            f.append(function(data,self._endtime))
         return f
 
 # Define some functions to use as trials
 
-def min_plastic(data):
+def min_plastic(data,endtime):
     # Maybe add a check that time == 100 to ensure run completed.
-    if data["time"] == 100:
+    if data["time"] == endtime:
         cost = data['max_plas_strain']
     else:
-        cost = 10
+        cost = 1E6
     return cost
 
-def creep_range(data):
-    if data["time"] == 100:
+def creep_range(data,endtime):
+    if data["time"] == endtime:
         cost = -1*(data['max_creep_strain']-data['min_creep_strain'])
     else:
-        cost = 10
+        cost = 1E6
     return cost
 
-def max_stress(data):
-    if data["time"] == 100:
+def max_stress(data,endtime):
+    if data["time"] == endtime:
         cost = -1*(data['max_stress'])
     else:
-        cost = 10
+        cost = 1E6
     return cost

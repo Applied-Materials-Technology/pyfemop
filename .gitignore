@@ -12,6 +12,7 @@ examples/moose*
 # Moose outpus
 *.e
 *stdout*
+*out.csv
 # C extensions
 *.so
 

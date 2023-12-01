@@ -8,7 +8,7 @@
   
   [Mesh]
     type = FileMesh
-    file = '/home/rspencer/mtgo/data/test_mesh.msh'
+    file = 'test_mesh.msh'
   []
   
   [Modules/TensorMechanics/Master]

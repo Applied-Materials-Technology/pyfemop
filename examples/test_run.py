@@ -45,12 +45,12 @@ eliminate_duplicates=True,
 save_history = True
 )
 termination = get_termination("n_gen", 40)
-c = CostFunction([min_plastic,max_stress])
-bounds  =(np.array([1.2,1.2,1.2]),np.array([2.5,2.5,2.5]))
+c = CostFunction([min_plastic,max_stress],2.16E7)
+bounds  =(np.array([1.,1.,1.]),np.array([2.5,2.5,2.5]))
 
 mor = MooseOptimizationRun('Run_Stress_plastic_gpa',algorithm,termination,herd,c,bounds)
 
-mor.run(1)
+mor.run(5)
 
 
 
@@ -65,8 +65,11 @@ with open(pickle_path,'rb') as f:
 mor.run(5)
 
 # %%
-S = morl._algorithm.result().F 
-X = morl._algorithm.result().X
-#plt.scatter(X[:,0],X[:,1])
+S = mor._algorithm.result().F 
+X = mor._algorithm.result().X
+plt.scatter(X[:,0],X[:,1])
+#%%
 plt.scatter(S[:,0],S[:,1])
+# %%
+morl.run_optimal([0,1,6])
 # %%
