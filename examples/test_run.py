@@ -16,6 +16,7 @@ from mtgo.optimizationmanager.costfunctions import CostFunction
 from mtgo.optimizationmanager.costfunctions import min_plastic
 from mtgo.optimizationmanager.costfunctions import creep_range
 from mtgo.optimizationmanager.costfunctions import max_stress
+from mtgo.optimizationmanager.costfunctions import avg_creep
 from pymoo.termination import get_termination
 import pickle
 from matplotlib import pyplot as plt
@@ -46,30 +47,32 @@ save_history = True
 )
 termination = get_termination("n_gen", 40)
 c = CostFunction([min_plastic,max_stress],2.16E7)
+#c = CostFunction([avg_creep,max_stress],2.16E7)
 bounds  =(np.array([1.,1.,1.]),np.array([2.5,2.5,2.5]))
 
-mor = MooseOptimizationRun('Run_Stress_plastic_gpa',algorithm,termination,herd,c,bounds)
+mor = MooseOptimizationRun('Run_Stress_plastic_hiload2_gpa',algorithm,termination,herd,c,bounds)
 
-mor.run(5)
+mor.run(15)
 
 
 
 #%% Test pickling
-pickle_path = '/home/rspencer/mtgo/examples/Run_Stress_plastic_gpa.pickle'
+pickle_path = '/home/rspencer/mtgo/examples/Run_Stress_plastic_hiload_gpa.pickle'
 with open(pickle_path,'rb') as f:
     morl = pickle.load(f,encoding='latin-1')
 
 
 
 #%% Test another run
-mor.run(5)
+mor.run(10)
 
 # %%
 S = mor._algorithm.result().F 
 X = mor._algorithm.result().X
-plt.scatter(X[:,0],X[:,1])
+for i in range(X.shape[0]):
+   plt.plot([X[i,0],X[i,1],X[i,2]],[5,0,-5])
 #%%
 plt.scatter(S[:,0],S[:,1])
 # %%
-morl.run_optimal([0,1,6])
+mor.run_optimal([0,1,2])
 # %%

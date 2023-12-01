@@ -51,3 +51,10 @@ def max_stress(data,endtime):
     else:
         cost = 1E6
     return cost
+
+def avg_creep(data,endtime):
+    if data["time"] == endtime:
+        cost = -1*(data['avg_creep'])
+    else:
+        cost = 1E6
+    return cost

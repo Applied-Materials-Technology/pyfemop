@@ -24,7 +24,7 @@
     [./top_pull]
       type = PiecewiseLinear
       x = '  0   0.5  100   '
-      y = '-0 -0.05  -0.05' 
+      y = '-0 -0.1  -0.1' 
     [../]
   
     [./dts]
@@ -44,7 +44,7 @@
       type = Pressure
       variable = disp_y
       boundary = Top-BC
-      factor = 1.65
+      factor = 1.3
       function = top_pull
     [../]
     [./u_bottom_fix]
@@ -165,6 +165,10 @@
     [./max_stress]
       type = ElementExtremeValue
       variable = stress_yy
+    [../]
+    [./avg_creep]
+      type = ElementAverageValue
+      variable = creep_strain_yy
     [../]
 
   []
