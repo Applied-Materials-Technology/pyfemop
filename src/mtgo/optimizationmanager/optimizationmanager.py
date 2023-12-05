@@ -96,9 +96,13 @@ class MooseOptimizationRun():
             #Run moose for all x.
             #Moose herder needs list of dicts. With correctly named parameters. 
             para_vars = list()
+            para_names = self._herd._modifier.get_var_keys()
             for i in range(x.shape[0]):
-                para_vars.append({'p0':x[i,0],'p1':x[i,1],'p2':x[i,2]})
-                        
+                para_dict = dict()
+                for j in range(len(para_names)):
+                    para_dict[para_names[j]] = x[i,j]
+                para_vars.append(para_dict)
+                   
             self._herd.run_para(para_vars)
             print('Run time = '+str(self._herd._run_time)+' seconds')
 
@@ -146,8 +150,12 @@ class MooseOptimizationRun():
         temp_herd.para_opts(n_moose=len(pf_nums),tasks_per_moose=1,threads_per_moose=1)
         
         para_vars = list()
+        para_names = self._herd._modifier.get_var_keys()
         for i in range(x.shape[0]):
-            para_vars.append({'p0':x[i,0],'p1':x[i,1],'p2':x[i,2]})
+            para_dict = dict()
+            for j in range(len(para_names)):
+                para_dict[para_names[j]] = x[i,j]
+            para_vars.append(para_dict)
         
         print('**** Running Selected Models ****')
         temp_herd.run_para(para_vars)  
