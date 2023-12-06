@@ -88,6 +88,8 @@ class MooseOptimizationRun():
                 break
             print('*****Running Optimization Generation {}*****'.format(self._algorithm.n_gen))
             # Ask for the next solution to be implemented
+            self._herd.clear_dirs()
+            self._herd.create_dirs(one_dir=False)
             pop = self._algorithm.ask()
             
             #Get parameters
@@ -109,9 +111,10 @@ class MooseOptimizationRun():
             # Read in moose results and get cost. 
             print('*****Reading Data*****')
             data_list = self._herd.read_results(output_csv_reader,'csv')
+            
             output_values = []
             for data in data_list:
-                c = self._cost_function.evaluate(data)
+                c = self._cost_function.evaluate_objectives(data)
                 output_values.append(c)
             # Format of f needs to be list of len (n_obj) with arrays of len(num_parts)
             costs = np.array(output_values)

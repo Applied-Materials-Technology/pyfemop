@@ -28,6 +28,8 @@ Point(5) = {gaugeWidth,gaugeHeight,0,lc}; //Top of gauge side line
 Point(6) = {0,gaugeHeight,0,lc}; //Top of gauge centreline
 Point(7) = {gaugeWidth,-gaugeHeight,0,lc}; // Bottom Edge of gauge
 
+
+
 // Connect things up with some lines
 Line(1) = {1,7}; // Bottom Hor Line
 Spline(2) = {7,2,3,4,5}; //Vertical up side
