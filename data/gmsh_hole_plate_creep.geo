@@ -57,9 +57,13 @@ bcksurf() = Surface In BoundingBox
 {-100,-100,0-delta,
 100,100,0+delta};
 
+vissurf() = Surface In BoundingBox 
+{-100,-100,gaugeThickness-delta,
+100,100,gaugeThickness+delta};
+
 Physical Surface("Top-BC",2) = {topsurf()};
 Physical Surface("Btm-BC",3) = {btmsurf()};
 Physical Surface("Bck-BC",4) = {bcksurf()};
-
+Physical Surface("Visible-Surface",5) = {vissurf()};
 //Save Str(filename);
 //Exit;

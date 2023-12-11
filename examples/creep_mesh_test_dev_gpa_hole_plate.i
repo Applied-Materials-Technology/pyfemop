@@ -123,7 +123,11 @@
   []
   
   [Outputs]
-    exodus = true
+    #exodus = true
+    [./out]
+      type = Exodus
+      elemental_as_nodal = true
+    [../]
     csv = true
   []
 

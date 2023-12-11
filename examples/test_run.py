@@ -49,28 +49,29 @@ eliminate_duplicates=True,
 save_history = True
 )
 termination = get_termination("n_gen", 40)
-c = CostFunction([min_plastic,max_stress],2.16E7)
-#c = CostFunction([avg_creep,max_stress],2.16E7)
+#c = CostFunction([min_plastic,max_stress],2.16E7)
+c = CostFunction([avg_creep,max_stress],2.16E7)
 #bounds  =(np.array([1.,1.,1.]),np.array([2.5,2.5,2.5]))
 #bounds  =(np.array([0.35,-0.5]),np.array([0.8,0.5]))
 # Might need to fix the bounds issue, i.e. if model fails then penalise
-bounds  =(np.array([-1.5,-0.5,0.1,-1.5,-0.5,0.1]),np.array([1.5,0.5,0.5,1.5,0.5,0.5]))
-mor = MooseOptimizationRun('Run_Stress_plastic_hole_plate_OC_r2',algorithm,termination,herd,c,bounds)
+bounds  =(np.array([-1.,-0.5,0.1,-1.,-0.5,0.1]),np.array([1.,0.5,1,1.0,0.5,1]))
+mor = MooseOptimizationRun('Run_Stress_plastic_hole_plate_OC_r6',algorithm,termination,herd,c,bounds)
 
 #%%
-mor.run(5)
+mor.run(10)
 
 
 
 #%% Test pickling
-pickle_path = '/home/rspencer/mtgo/examples/Run_Stress_plastic_hiload_gpa.pickle'
+pickle_path = '/home/rspencer/mtgo/examples/Run_Stress_plastic_hole_plate_OC_r5.pickle'
 with open(pickle_path,'rb') as f:
     morl = pickle.load(f,encoding='latin-1')
 
+S = morl._algorithm.result().F 
+X = morl._algorithm.result().X
+print(X)
+print(S)
 
-
-#%% Test another run
-mor.run(10)
 
 # %%
 S = mor._algorithm.result().F 
@@ -82,7 +83,23 @@ print(S)
 #for i in range(X.shape[0]):
 #    plt.plot([2.5,2.5*X[i,0],2.5],[-10,10*X[i,1],10])
 #%%
+for i in range(X.shape[0]):
+    fig, ax = plt.subplots()
+    rect = plt.Rectangle((-1,-1),2,2)
+
+    #i=1
+    circ1 = plt.Circle((X[i,0],X[i,1]),X[i,2],color='w')
+    circ2 = plt.Circle((X[i,3],X[i,4]),X[i,5],color='w')
+    ax.add_patch(rect)
+    ax.add_patch(circ1)
+    ax.add_patch(circ2)
+    ax.set_xlim([-1,1])
+    ax.set_ylim([-1,1])
+    ax.set_title('{}'.format(i))
+    
+
+#%%
 plt.scatter(S[:,0],S[:,1])
 # %%
 mor.run_optimal([0,1])
-# %%
+# %% 
