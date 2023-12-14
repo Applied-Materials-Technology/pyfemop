@@ -41,7 +41,7 @@ input_modifier = InputModifier(geo_file,'//',';')
 
 herd = MooseHerd(input_file,moose_dir,app_dir,app_name,input_modifier)
 herd.clear_dirs()
-herd.create_dirs(one_dir=False)
+herd.create_dirs(one_dir=True)
 herd.para_opts(n_moose=8,tasks_per_moose=1,threads_per_moose=1)
 
 algorithm = NSGA2(
@@ -60,7 +60,7 @@ c = CostFunction(reader,[max_stress_fullfield],2.16E7)
 #bounds  =(np.array([1.,1.,1.]),np.array([2.5,2.5,2.5]))
 #bounds  =(np.array([0.35,-0.5]),np.array([0.8,0.5]))
 # Might need to fix the bounds issue, i.e. if model fails then penalise
-bounds  =(np.array([-1.,-0.5,0.1,-1.,-0.5,0.1]),np.array([1.,0.5,1,1.0,0.5,1]))
+bounds  =(np.array([-1.,-0.5,0.1,-1.,-0.5,0.1]),np.array([1.,0.5,0.5,1.0,0.5,0.5]))
 mor = MooseOptimizationRun('Run_Stress_plastic_hole_plate_OC_r7',algorithm,termination,herd,c,bounds)
 #%% Test parallel reader
 efile = '/home/rspencer/mtgo/examples/creep_mesh_test_dev_gpa_hole_plate_out.e'

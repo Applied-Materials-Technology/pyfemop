@@ -117,12 +117,20 @@ def avg_creep(data,endtime):
         cost = 1E6
     return cost
 
-def max_stress_fullfield(data,endtime):
+def maximise_stress(data,endtime):
     if data is None:
         return 1E6
-    if int(data['metadata']['time'][-1]) != endtime:
+    if int(data._time[-1]) != endtime:
         return 1E6
     
-    return np.max(data[-1]['stress_yy'])
+    return -1*np.max(data.data_sets[-1]['stress_yy'])
+
+def maximise_stress_deviation(data,endtime):
+    if data is None:
+        return 1E6
+    if int(data._time[-1]) != endtime:
+        return 1E6
+    
+    return -1*np.std(data.data_sets[-1]['stress_yy'])
 
 
