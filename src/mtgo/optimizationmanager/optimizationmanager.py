@@ -56,6 +56,7 @@ class MooseOptimizationRun():
         self._n_obj = self._cost_function.n_obj
         self._bounds = bounds
         self._termination = termination
+        self._reader = cost_function._reader # Data reader 
 
         self._problem = Problem(n_var=self._n_var,
                   n_obj=self._n_obj,
@@ -110,14 +111,15 @@ class MooseOptimizationRun():
 
             # Read in moose results and get cost. 
             print('*****Reading Data*****')
-            data_list = self._herd.read_results(output_csv_reader,'csv')
+            data_list = self._herd.read_results_para(self._reader)
             
-            output_values = []
-            for data in data_list:
-                c = self._cost_function.evaluate_objectives(data)
-                output_values.append(c)
+            #output_values = []
+            #for data in data_list:
+            #    c = self._cost_function.evaluate_objectives(data)
+            #    output_values.append(c)
             # Format of f needs to be list of len (n_obj) with arrays of len(num_parts)
-            costs = np.array(output_values)
+            #costs = np.array(output_values)
+            costs = np.array(self._cost_function.evaluate_parallel(data_list))
             F = []
             for i in range(costs.shape[1]):
                 F.append(costs[:,i])

@@ -1,11 +1,12 @@
 #
 # Some methods for reading in an building cost functions. 
 #
-
+import multiprocessing as mp
+import numpy as np
 
 class CostFunction():
 
-    def __init__(self,objective_functions,endtime,ineq_constraints=None,eq_constraints=None):
+    def __init__(self,reader,objective_functions,endtime,ineq_constraints=None,eq_constraints=None):
         """_summary_
 
         Args:
@@ -13,6 +14,7 @@ class CostFunction():
             functions (list): List of defined functions using the values in data.
         """
         #self._data = data
+        self._reader = reader
         self._objective_functions = objective_functions
         self._ineq_constraints = ineq_constraints
         self._eq_constraints = eq_constraints
@@ -49,6 +51,19 @@ class CostFunction():
         for function in self._constraints:
             g.append(function(data,self._endtime))
         return g
+    
+    def evaluate_parallel(self,data_list):
+        #Evaluate all objectives and constraints in parallel.
+        n_threads = len(data_list)
+
+        with mp.Pool(n_threads) as pool:
+            processes = []
+            for data in data_list:
+                processes.append(pool.apply_async(self.evaluate_objectives, (data,))) # tuple is important, otherwise it unpacks strings for some reason
+            f_list=[pp.get() for pp in processes]
+        
+        return f_list
+
 
 # Define some functions to use as trials
 
@@ -92,8 +107,22 @@ def max_stress(data,endtime):
     return cost
 
 def avg_creep(data,endtime):
-    if data["time"] == endtime:
-        cost = -1*(data['avg_creep'])
-    else:
+    try:
+        if data["time"] == endtime:
+            cost = -1*(data['avg_creep'])
+        else:
+            cost = 1E6
+    except(TypeError):
+        print('Suspect model did not run')
         cost = 1E6
     return cost
+
+def max_stress_fullfield(data,endtime):
+    if data is None:
+        return 1E6
+    if int(data['metadata']['time'][-1]) != endtime:
+        return 1E6
+    
+    return np.max(data[-1]['stress_yy'])
+
+

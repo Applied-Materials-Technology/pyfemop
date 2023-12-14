@@ -16,7 +16,7 @@
       strain = FINITE
       incremental = true
       add_variables = true
-      generate_output = 'stress_yy elastic_strain_yy creep_strain_yy stress_xx plastic_strain_yy'
+      generate_output = 'stress_yy elastic_strain_yy creep_strain_yy stress_xx plastic_strain_yy mechanical_strain_xx mechanical_strain_yy'
     [../]
   []
   

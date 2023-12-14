@@ -16,11 +16,16 @@ from mooseherder.outputreader import output_csv_reader
 from mtgo.optimizationmanager.costfunctions import CostFunction
 from mtgo.optimizationmanager.costfunctions import min_plastic
 from mtgo.optimizationmanager.costfunctions import creep_range
-from mtgo.optimizationmanager.costfunctions import max_stress
+from mtgo.optimizationmanager.costfunctions import max_stress_fullfield
 from mtgo.optimizationmanager.costfunctions import avg_creep
 from pymoo.termination import get_termination
 import pickle
 from matplotlib import pyplot as plt
+from mtgo.mooseutils.outputreaders import OutputExodusReader
+from mtgo.mooseutils.outputreaders import OutputCSVReader
+from materialmodeloptimizer.fullfielddata import fullfieldwrapper
+import pyvista as pv
+import pickle
 #%% Baseline run
 moose_dir = '/home/rspencer/moose'
 app_dir = '/home/rspencer/proteus'
@@ -50,15 +55,24 @@ save_history = True
 )
 termination = get_termination("n_gen", 40)
 #c = CostFunction([min_plastic,max_stress],2.16E7)
-c = CostFunction([avg_creep,max_stress],2.16E7)
+reader = OutputExodusReader(False)
+c = CostFunction(reader,[max_stress_fullfield],2.16E7)
 #bounds  =(np.array([1.,1.,1.]),np.array([2.5,2.5,2.5]))
 #bounds  =(np.array([0.35,-0.5]),np.array([0.8,0.5]))
 # Might need to fix the bounds issue, i.e. if model fails then penalise
 bounds  =(np.array([-1.,-0.5,0.1,-1.,-0.5,0.1]),np.array([1.,0.5,1,1.0,0.5,1]))
-mor = MooseOptimizationRun('Run_Stress_plastic_hole_plate_OC_r6',algorithm,termination,herd,c,bounds)
+mor = MooseOptimizationRun('Run_Stress_plastic_hole_plate_OC_r7',algorithm,termination,herd,c,bounds)
+#%% Test parallel reader
+efile = '/home/rspencer/mtgo/examples/creep_mesh_test_dev_gpa_hole_plate_out.e'
+reader = OutputExodusReader(False)
+test = reader.read(efile)
 
 #%%
-mor.run(10)
+dl = herd.read_results_para(reader)
+c.evaluate_parallel(dl)
+#%%
+mor.run(1)
+#%%
 
 
 
