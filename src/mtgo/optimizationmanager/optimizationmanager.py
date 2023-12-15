@@ -3,35 +3,12 @@
 #
 
 import numpy as np
-import matplotlib.pyplot as plt
 from pymoo.core.problem import Problem
 from pymoo.problems.static import StaticProblem
 from pymoo.core.evaluator import Evaluator
-from pymoo.algorithms.soo.nonconvex.pso import PSO
-from pymoo.termination import get_termination
-from pymoo.termination.default import DefaultMultiObjectiveTermination
-from pymoo.optimize import minimize
-
-from pymoo.algorithms.moo.nsga2 import NSGA2
-from pymoo.operators.crossover.sbx import SBX
-from pymoo.operators.mutation.pm import PM
-from pymoo.operators.sampling.rnd import FloatRandomSampling
-
-from mtgo.optimizationmanager.dummysolver import dummy_solve
-from mtgo.optimizationmanager.dummysolver import dummy_solve_moo
-from mtgo.optimizationmanager.dummysolver import sphere
-from mtgo.optimizationmanager.dummysolver import rastigrin
-from mtgo.optimizationmanager.dummysolver import rosen
-
-from mtgo.optimizationmanager.costfunctions import CostFunction
-from mtgo.optimizationmanager.costfunctions import min_plastic
-from mtgo.optimizationmanager.costfunctions import creep_range
 
 from mooseherder.mooseherd import MooseHerd
-from mooseherder.inputmodifier import InputModifier
-from mooseherder.outputreader import output_csv_reader
 
-from pymoo.visualization.heatmap import Heatmap
 import pickle
 
 class MooseOptimizationRun():

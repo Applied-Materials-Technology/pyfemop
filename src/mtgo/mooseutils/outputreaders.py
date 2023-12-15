@@ -56,7 +56,7 @@ def output_exodus_reader(filename,dic_filter=True,filter_spacing=0.2,dic_data=No
 class OutputCSVReader():
     """Class to support reading in of csv files in parallels
     An instance of this class will be passed to the mooseherder 
-    which will call read() in paralle.
+    which will call read() in paralle;.
     """
 
     def __init__(self):
@@ -114,7 +114,11 @@ class OutputExodusReader():
             return None
         
         # Import Moose Data
-        moose_data = sdw.moose_to_spatialdata(filename)
+        try:
+            moose_data = sdw.moose_to_spatialdata(filename)
+        except(KeyError):
+            print('Error reading file. Check Stdout.') # This error is likely due to the mesh containing HEX8 and PRISM6 elements.
+            return None
         
         if self._dic_filter and self._dic_data is None:
             moose_data_int = sdw.interpolate_spatialdata_grid(moose_data,self._filter_spacing)

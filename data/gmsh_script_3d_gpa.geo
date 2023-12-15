@@ -73,16 +73,17 @@ midsurf() = Surface In BoundingBox
 {0-delta,-gaugeHeight-delta,0-delta,
 0+delta,gaugeHeight+delta,gaugeThickness+delta};
 
-// We now can use these variables to assign physical surfaces.
-// Again note the tags! Physical tags start at 1 and tags are shared between all physical entities.
-// Physical Volume("Vol",1) and Physical Surface("Sur",1) will cause errors!
-// The names given to these surfaces will be used as the BC names in MOOSE.
+vissurf() = Surface In BoundingBox 
+{-100,-100,gaugeThickness-delta,
+100,100,gaugeThickness+delta};
+
+
 
 Physical Surface("Top-BC",2) = {topsurf()};
 Physical Surface("Btm-BC",3) = {btmsurf()};
-Physical Surface("Bck-BC",4) = {bcksurf()};
-Physical Surface("Mid-BC",5) = {midsurf()};
-
+Physical Surface("Z-Symm",4) = {bcksurf()};
+Physical Surface("X-Symm",5) = {midsurf()};
+Physical Surface("Visible-Surface",6) = {vissurf()};
 
 Save Str(filename);
 Exit;
