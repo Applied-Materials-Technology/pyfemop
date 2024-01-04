@@ -2,6 +2,17 @@
 # Working version of a creep model with realistic-ish material model.
 # This creep model isn't normalised so the power law causes big changes to A parameter.
 #
+
+#_* Variables Block
+e0 = 1E-3
+k = 0.4
+n = 0.1
+yield = 0.2
+a = 2.1119
+n_creep =6.832
+m_creep = -0.8
+#**
+
 [GlobalParams]
     displacements = 'disp_x disp_y disp_z'
   []
@@ -16,7 +27,7 @@
       strain = FINITE
       incremental = true
       add_variables = true
-      generate_output = 'stress_yy elastic_strain_yy creep_strain_yy stress_xx plastic_strain_yy mechanical_strain_xx mechanical_strain_yy'
+      generate_output = 'stress_xx stress_yy stress_xy elastic_strain_yy creep_strain_yy stress_xx plastic_strain_yy mechanical_strain_xx mechanical_strain_yy mechanical_strain_xy'
     [../]
   []
   
@@ -35,7 +46,7 @@
 
     [./swift]
         type = ParsedFunction
-        expression = '0.4*(1E-3 +x)^0.1'
+        expression = '${k}*(${e0} +x)^${n}'
     [../]
   []
   
@@ -87,16 +98,16 @@
     [../]
     [./creep]
       type = PowerLawCreepStressUpdate
-      coefficient = 2.1119#10.559
-      n_exponent = 6.832
-      m_exponent = -0.8
+      coefficient = ${a}#2.1119#10.559
+      n_exponent = ${n_creep}#6.832
+      m_exponent = ${m_creep}#-0.8
       activation_energy = 0
     [../]
     [./plas]
       type = IsotropicPlasticityStressUpdate
       #hardening_constant = 100E6
       hardening_function = swift
-      yield_stress = 0.2#200E6
+      yield_stress = ${yield}#0.2#200E6
     [../]
   []
   
