@@ -2,7 +2,7 @@
 # Moose output readers
 #
 import pandas as pd
-from materialmodeloptimizer.fullfielddata import spatialdatawrapper as sdw
+from pycoatl.spatialdata.importmoose import moose_to_spatialdata
 import os
 
 def output_csv_reader(filename):
@@ -37,11 +37,11 @@ def output_exodus_reader(filename,dic_filter=True,filter_spacing=0.2,dic_data=No
        return None
     
     # Import Moose Data
-    moose_data = sdw.moose_to_spatialdata(filename)
+    moose_data = moose_to_spatialdata(filename)
     
     if dic_filter and dic_data is None:
-        moose_data_int = sdw.interpolate_multiblock_regular(moose_data,filter_spacing)
-        sdw.window_differentation(moose_data_int,data_range,window_size)
+        moose_data_int = moose_data.interpolate_to_grid(filter_spacing)
+        moose_data_int.window_differentation(data_range,window_size)
         output = moose_data_int
 
     elif dic_filter and dic_data is not None:
@@ -115,14 +115,14 @@ class OutputExodusReader():
         
         # Import Moose Data
         try:
-            moose_data = sdw.moose_to_spatialdata(filename)
+            moose_data = moose_to_spatialdata(filename)
         except(KeyError):
             print('Error reading file. Check Stdout.') # This error is likely due to the mesh containing HEX8 and PRISM6 elements.
             return None
         
         if self._dic_filter and self._dic_data is None:
-            moose_data_int = sdw.interpolate_spatialdata_grid(moose_data,self._filter_spacing)
-            sdw.window_differentation(moose_data_int,self._data_range,self._window_size)
+            moose_data_int = moose_data.interpolate_to_grid(self._filter_spacing)
+            moose_data_int.window_differentation(self._data_range,self._window_size)
             output = moose_data_int
 
         elif self._dic_filter and self._dic_data is not None:

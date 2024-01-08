@@ -6,13 +6,20 @@ import numpy as np
 
 class CostFunction():
 
-    def __init__(self,reader,objective_functions,endtime,ineq_constraints=None,eq_constraints=None):
-        """_summary_
+    def __init__(self,reader,objective_functions,endtime,dic_filter = False, filter_size=0.2,dic_data = None,ineq_constraints=None,eq_constraints=None):
+        """Cost functions to be evaluated. 
+        Now will run on .exodus output only. 
 
         Args:
-            data (dict): Data used to calculated cost functions
-            functions (list): List of defined functions using the values in data.
-        """
+            reader (function): Function read the data and get into whatever format. Presumably should be moose_to_spatialdata
+            objective_functions (list of functions): Functions to run over data.
+            endtime (float): Endtime of the simuation.
+            dic_filter (bool, optional): Whether to run a DIC filter on the data. Defaults to False.
+            filter_size (float, optional): Size of the filter. Defaults to 0.2.
+            dic_data (SpatialData, optional): Dic data to use in costfunction maybe. Defaults to None.
+            ineq_constraints (list of functions, optional): Functions describing inequality constraints. Defaults to None.
+            eq_constraints (list of functions, optional): Functions describing equality constraints. Defaults to None.
+        """          
         #self._data = data
         self._reader = reader
         self._objective_functions = objective_functions
@@ -30,7 +37,7 @@ class CostFunction():
             self.n_eq_constraints =0
         self._endtime = endtime
 
-    def evaluate_objectives(self,data):
+    def evaluate_objectives(self):
         """Calculate the cost of each function, to pass back to pymoo
         
         Returns:
@@ -38,7 +45,7 @@ class CostFunction():
         """
         f= []
         for function in self._objective_functions:
-            f.append(function(data,self._endtime))
+            f.append(function(self))
         return f
     
     def evaluate_constraints(self,data):
@@ -65,6 +72,8 @@ class CostFunction():
         return f_list
 
 
+
+
 # Define some functions to use as trials
 
 def objective_function(data,endtime):
@@ -74,6 +83,7 @@ def objective_function(data,endtime):
         data (dict): Should be dict, unless the model didn't run
         endtime (int): End time of the simulation 
     """
+    pass
     
 
 def min_plastic(data,endtime):

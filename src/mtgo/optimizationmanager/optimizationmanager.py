@@ -13,7 +13,7 @@ import pickle
 
 class MooseOptimizationRun():
 
-    def __init__(self,name,algorithm,termination,herd,cost_function,bounds):
+    def __init__(self,name,algorithm,termination,herd,cost_function,parameter_space):
         """Class to contain everything needed for an optimization run 
         with moose. Should be pickle-able.
 
@@ -23,15 +23,22 @@ class MooseOptimizationRun():
             termination (pymoo termination): Termination criteria for the algorithm
             herd (MooseHerd): MooseHerd instance for the run.
             costfunction (CostFunction): CostFunction instance.
-            bounds (tuple): 2-tuple containing lower and upper bounds as arrays
+            parameter_space (dict): Dict with parameters as keys and 2-tuple with lower and upper bounds as values.
         """
         self._name = name
         self._algorithm = algorithm
         self._herd = herd
         self._cost_function = cost_function
-        self._n_var = len(self._herd._modifier._vars)
+        self._parameter_space = parameter_space
+        self._n_var = len(parameter_space)
         self._n_obj = self._cost_function.n_obj
-        self._bounds = bounds
+        lb=[]
+        ub = []
+        for value in parameter_space.values():
+            lb.append(value[0])
+            ub.append(value[1])
+
+        self._bounds = (np.array(lb),np.array(ub))
         self._termination = termination
         self._reader = cost_function._reader # Data reader 
 
@@ -46,7 +53,7 @@ class MooseOptimizationRun():
     def backup(self):
         """Create a pickle dump of the class instance.
         """
-        pickle_path = self._herd._input_dir + '/' + self._name.replace(' ','_').replace('.','_') + '.pickle'
+        pickle_path = self._herd._base_dir + self._name.replace(' ','_').replace('.','_') + '.pickle'
         #print(pickle_path)
         with open(pickle_path,'wb') as f:
             pickle.dump(self,f,pickle.HIGHEST_PROTOCOL)

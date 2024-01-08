@@ -141,7 +141,11 @@ def update_exceeded(spatialdata,creep_limit,field='mechanical_strain_yy'):
     for data_set in spatialdata.data_sets:
         data_set['over_creep_limit'] = data_set[field]>creep_limit
 
+    t,s = get_time_stress_curves_int(spatialdata,creep_limit)
+    spatialdata.data_sets[-1]['time_to_limit'] = t
+    spatialdata.data_sets[-1]['stress_at_limit'] = s
+
 
 # %%
-update_exceeded(test_data,2E-3)
+update_exceeded(test_data,1e-3)
 # %%

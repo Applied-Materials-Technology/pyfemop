@@ -11,6 +11,8 @@ from pymoo.operators.mutation.pm import PM
 from pymoo.operators.sampling.rnd import FloatRandomSampling
 from mooseherder.mooseherd import MooseHerd
 from mooseherder.inputmodifier import InputModifier
+from mooseherder.mooseherd import MooseRunner
+from mooseherder.gmshrunner import GmshRunner
 
 from mtgo.optimizationmanager.costfunctions import CostFunction
 from mtgo.optimizationmanager.costfunctions import min_plastic
@@ -22,24 +24,34 @@ from pymoo.termination import get_termination
 import pickle
 from matplotlib import pyplot as plt
 from mtgo.mooseutils.outputreaders import OutputExodusReader
+from pycoatl.spatialdata.importmoose import moose_to_spatialdata
 import pickle
 #%% Baseline run
+# Setup MOOSE
 moose_dir = '/home/rspencer/moose'
-app_dir = '/home/rspencer/proteus'
-app_name = 'proteus-opt'
+moose_app_dir = '/home/rspencer/proteus'
+moose_app_name = 'proteus-opt'
+moose_input = '/home/rspencer/mtgo/examples/creep_mesh_test_dev_gpa.i'
 
-input_file = '/home/rspencer/mtgo/examples/creep_mesh_test_dev_gpa.i'
-#input_file = '/home/rspencer/mtgo/examples/creep_mesh_test_dev_gpa_hole_plate.i'
+moose_modifier = InputModifier(moose_input,'#','')
+moose_runner = MooseRunner(moose_dir,moose_app_dir,moose_app_name)
+moose_vars = [moose_modifier.get_vars()]
 
-geo_file = '/home/rspencer/mtgo/data/gmsh_script_3d_gpa.geo'
-#geo_file = '/home/rspencer/mtgo/data/gmsh_hole_plate_creep_alt.geo'
+# Setup Gmsh
+gmsh_path = '/home/rspencer/src/gmsh/bin/gmsh'#os.path.join(user_dir,'moose-workdir/gmsh/bin/gmsh')
+gmsh_input = '/home/rspencer/mtgo/data/gmsh_script_3d_gpa.geo'
 
-input_modifier = InputModifier(geo_file,'//',';')
+gmsh_runner = GmshRunner(gmsh_path)
+gmsh_runner.set_input_file(gmsh_input)
+gmsh_modifier = InputModifier(gmsh_input,'//',';')
 
-herd = MooseHerd(input_file,moose_dir,app_dir,app_name,input_modifier)
+# Start the herd and create working directories
+herd = MooseHerd(moose_runner,moose_modifier,gmsh_runner,gmsh_modifier)
+# Don't have to clear directories on creation of the herd but we do so here
+# so that directory creation doesn't raise errors
+herd.set_base_dir('/home/rspencer/mtgo/examples')
 herd.clear_dirs()
-herd.create_dirs(one_dir=True)
-herd.para_opts(n_moose=8,tasks_per_moose=1,threads_per_moose=1)
+herd.create_dirs()
 
 algorithm = NSGA2(
 pop_size=8,
@@ -114,3 +126,9 @@ test = reader.read(efile)
 #%%
 dl = herd.read_results_para(reader)
 c.evaluate_parallel(dl)
+
+#%%
+output_reader = OutputExodusReader(True,0.2E-3,data_range='last')
+# %%
+test= output_reader.read('/home/rspencer/mooseherder/examples/moose-workdir-1/moose-sim-1_out.e')
+# %%
