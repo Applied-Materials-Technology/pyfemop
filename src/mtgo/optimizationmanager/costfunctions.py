@@ -37,7 +37,7 @@ class CostFunction():
             self.n_eq_constraints =0
         self._endtime = endtime
 
-    def evaluate_objectives(self):
+    def evaluate_objectives(self,data):
         """Calculate the cost of each function, to pass back to pymoo
         
         Returns:
@@ -45,7 +45,7 @@ class CostFunction():
         """
         f= []
         for function in self._objective_functions:
-            f.append(function(self))
+            f.append(function(data,self._endtime))
         return f
     
     def evaluate_constraints(self,data):
@@ -127,20 +127,20 @@ def avg_creep(data,endtime):
         cost = 1E6
     return cost
 
-def maximise_stress(data,endtime):
+def maximise_strain(data,endtime):
     if data is None:
         return 1E6
     if int(data._time[-1]) != endtime:
         return 1E6
     
-    return -1*np.max(data.data_sets[-1]['stress_yy'])
+    return -1*np.nanmax(np.array(data.data_sets[-1]['eyy']))
 
-def maximise_stress_deviation(data,endtime):
+def maximise_strain_deviation(data,endtime):
     if data is None:
         return 1E6
     if int(data._time[-1]) != endtime:
         return 1E6
     
-    return -1*np.std(data.data_sets[-1]['stress_yy'])
+    return -1*np.nanstd(np.array(data.data_sets[-1]['eyy']))
 
 

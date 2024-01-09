@@ -27,7 +27,7 @@ m_creep = -0.8
       strain = FINITE
       incremental = true
       add_variables = true
-      generate_output = 'stress_xx stress_yy stress_xy elastic_strain_yy creep_strain_yy stress_xx plastic_strain_yy mechanical_strain_xx mechanical_strain_yy mechanical_strain_xy'
+      generate_output = 'stress_xx stress_yy stress_xy elastic_strain_yy creep_strain_yy plastic_strain_yy mechanical_strain_xx mechanical_strain_yy mechanical_strain_xy'
     [../]
   []
   
@@ -98,16 +98,16 @@ m_creep = -0.8
     [../]
     [./creep]
       type = PowerLawCreepStressUpdate
-      coefficient = ${a}#2.1119#10.559
-      n_exponent = ${n_creep}#6.832
-      m_exponent = ${m_creep}#-0.8
+      coefficient = ${a} 
+      n_exponent = ${n_creep}
+      m_exponent = ${m_creep} 
       activation_energy = 0
     [../]
     [./plas]
       type = IsotropicPlasticityStressUpdate
       #hardening_constant = 100E6
       hardening_function = swift
-      yield_stress = ${yield}#0.2#200E6
+      yield_stress = ${yield}
     [../]
   []
   

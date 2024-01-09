@@ -10,6 +10,7 @@ from pymoo.core.evaluator import Evaluator
 from mooseherder.mooseherd import MooseHerd
 
 import pickle
+import copy
 
 class MooseOptimizationRun():
 
@@ -74,7 +75,7 @@ class MooseOptimizationRun():
             print('*****Running Optimization Generation {}*****'.format(self._algorithm.n_gen))
             # Ask for the next solution to be implemented
             self._herd.clear_dirs()
-            self._herd.create_dirs(one_dir=False)
+            self._herd.create_dirs()
             pop = self._algorithm.ask()
             
             #Get parameters
@@ -83,20 +84,23 @@ class MooseOptimizationRun():
             #Run moose for all x.
             #Moose herder needs list of dicts. With correctly named parameters. 
             para_vars = list()
-            para_names = self._herd._modifier.get_var_keys()
+            para_names = [x for x in self._parameter_space.keys()]
             for i in range(x.shape[0]):
                 para_dict = dict()
                 for j in range(len(para_names)):
                     para_dict[para_names[j]] = x[i,j]
                 para_vars.append(para_dict)
-                   
-            self._herd.run_para(para_vars)
-            print('Run time = '+str(self._herd._run_time)+' seconds')
+
+            moose_vars = [self._herd._moose_modifier.get_vars()]  
+            #print(self._herd._run_dir)     
+            self._herd.run_para(moose_vars,para_vars)
+            print('Run time = '+str(self._herd.get_sweep_time())+' seconds')
 
             # Read in moose results and get cost. 
             print('*****Reading Data*****')
-            data_list = self._herd.read_results_para(self._reader)
-            
+            data_list = self._herd.read_results_para_generic(self._reader)
+            #print(data_list[0].data_sets[-1])
+            #data_list[0].data_sets[-1].plot(scalars='eyy')
             #output_values = []
             #for data in data_list:
             #    c = self._cost_function.evaluate_objectives(data)
@@ -132,14 +136,17 @@ class MooseOptimizationRun():
 
         # Create runner
         # Temp herder
-        temp_herd = MooseHerd(self._herd.input_file,self._herd._runner.moose_dir,self._herd._runner.app_dir,self._herd._runner.app_name,self._herd._modifier)
+        temp_herd = copy.deepcopy(self._herd)
         temp_herd.clear_dirs()
         # There's some kind of bug with create_dirs, doesn' create via para_opts
-        temp_herd.create_dirs(one_dir=False,sub_dir='moose-opt')
-        temp_herd.para_opts(n_moose=len(pf_nums),tasks_per_moose=1,threads_per_moose=1)
+        temp_herd.set_names(sub_dir='moose-opt')
+        temp_herd.para_opts(n_moose=len(pf_nums),tasks_per_moose=1,threads_per_moose=1,redirect_out=False)
+        temp_herd.create_dirs()
         
+        moose_vars = [self._herd._moose_modifier.get_vars()] 
+
         para_vars = list()
-        para_names = self._herd._modifier.get_var_keys()
+        para_names = [t for t in self._parameter_space.keys()]
         for i in range(x.shape[0]):
             para_dict = dict()
             for j in range(len(para_names)):
@@ -147,5 +154,5 @@ class MooseOptimizationRun():
             para_vars.append(para_dict)
         
         print('**** Running Selected Models ****')
-        temp_herd.run_para(para_vars)  
+        temp_herd.run_para(moose_vars,para_vars)  
         
