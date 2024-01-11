@@ -98,15 +98,13 @@ class MooseOptimizationRun():
 
             # Read in moose results and get cost. 
             print('*****Reading Data*****')
-            data_list = self._herd.read_results_para_generic(self._reader)
-            #print(data_list[0].data_sets[-1])
-            #data_list[0].data_sets[-1].plot(scalars='eyy')
-            #output_values = []
-            #for data in data_list:
-            #    c = self._cost_function.evaluate_objectives(data)
-            #    output_values.append(c)
-            # Format of f needs to be list of len (n_obj) with arrays of len(num_parts)
-            #costs = np.array(output_values)
+            if self._reader is not None:
+                data_list = self._herd.read_results_para_generic(self._reader)
+            else:
+                # For working with examples relying on herder only.
+                vars_to_read = ['disp_y']
+                data_list = self._herd.read_results(vars_to_read)
+
             costs = np.array(self._cost_function.evaluate_parallel(data_list))
             F = []
             for i in range(costs.shape[1]):

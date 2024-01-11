@@ -4,3 +4,12 @@ sphinx-rtd-theme
 pymoo
 numpy
 scipy
+trame-vtk
+trame-vuetify
+ipywidgets
+netCDF4
+pandas
+pyvista
+numba
+
+

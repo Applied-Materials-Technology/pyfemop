@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "mtgo"
+name = "pyfemop"
 version = "0.1.0"
-description = "Package for optimizing material geometry"
+description = "Package for optimizing FE models"
 authors = ["Rory Spencer"]
 license = "MIT"
 readme = "README.md"

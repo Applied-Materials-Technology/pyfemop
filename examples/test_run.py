@@ -13,6 +13,7 @@ from mooseherder.mooseherd import MooseHerd
 from mooseherder.inputmodifier import InputModifier
 from mooseherder.mooseherd import MooseRunner
 from mooseherder.gmshrunner import GmshRunner
+from mooseherder.exodusreader import ExodusReader
 import copy
 
 from pyfemop.optimizationmanager.costfunctions import CostFunction
@@ -188,4 +189,6 @@ def maximise_stress(data,endtime):
         return 1E6
     
     return -1*np.nanmax(np.array(data.data_sets[-1]['eyy']))
+# %%
+T = ExodusReader('/home/rspencer/pyfemop/examples/scripts/ex1_linear_elastic_out.e')
 # %%
