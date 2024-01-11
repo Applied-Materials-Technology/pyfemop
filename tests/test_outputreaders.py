@@ -3,7 +3,7 @@
 #
 
 import pytest
-from mtgo.mooseutils.outputreaders import output_exodus_reader
+from pyfemop.mooseutils.outputreaders import output_exodus_reader
 
 def test_ex_none():
     file = '/Doesntexist.e'

@@ -3,9 +3,9 @@
 #
 
 import pytest
-from mtgo.optimizationmanager.costfunctions import CostFunction
-from mtgo.optimizationmanager.costfunctions import min_plastic
-from mtgo.optimizationmanager.costfunctions import creep_range
+from pyfemop.optimizationmanager.costfunctions import CostFunction
+from pyfemop.optimizationmanager.costfunctions import min_plastic
+from pyfemop.optimizationmanager.costfunctions import creep_range
 
 from mooseherder.outputreader import output_csv_reader
 

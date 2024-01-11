@@ -3,7 +3,7 @@
 #
 
 import pytest
-from mtgo.gmshutils import RunGmsh
+from pyfemop.gmshutils import RunGmsh
 
 def test_run_file_exception():
     wrong_extension ='/home/rspencer/mtgo/data/dummy.i'

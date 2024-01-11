@@ -3,7 +3,7 @@
 #
 
 import pytest
-from mtgo.filemanager import InputModifier
+from pyfemop.filemanager import InputModifier
 
 def test_inputmanager():
     input_file = '/home/rspencer/mtgo/data/gmsh_script.geo'

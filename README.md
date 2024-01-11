@@ -1,11 +1,11 @@
-# mtgo
+# pyfemop
 
-Package for optimizing material geometry
+
 -----------------------------------------
-MTGO - Mechanical Test Geometry Optimizer
+PyFEMOP - Python Finite Element Model Optimisation Problems
 -----------------------------------------
-MTGO is a python based tool for optimizing
-the geometry of mechanical tests. 
+pyfemop is a python based tool for optimizing
+FE models.
 It will use the MOOSE FE package, with 
 Gmsh to generate meshes. 
 
@@ -27,8 +27,8 @@ Interested in contributing? Check out the contributing guidelines. Please note t
 
 ## License
 
-`mtgo` was created by Rory Spencer. It is licensed under the terms of the MIT license.
+`pyfemop` was created by Rory Spencer. It is licensed under the terms of the MIT license.
 
 ## Credits
 
-`mtgo` was created with [`cookiecutter`](https://cookiecutter.readthedocs.io/en/latest/) and the `py-pkgs-cookiecutter` [template](https://github.com/py-pkgs/py-pkgs-cookiecutter).
+`pyfemop` was created with [`cookiecutter`](https://cookiecutter.readthedocs.io/en/latest/) and the `py-pkgs-cookiecutter` [template](https://github.com/py-pkgs/py-pkgs-cookiecutter).

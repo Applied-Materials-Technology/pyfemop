@@ -3,8 +3,8 @@
 # Interactive moose read tests
 
 #%%
-from mtgo.mooseutils.outputreaders import output_exodus_reader
-from mtgo.mooseutils.outputreaders import OutputExodusReader
+from pyfemop.mooseutils.outputreaders import output_exodus_reader
+from pyfemop.mooseutils.outputreaders import OutputExodusReader
 import numpy as np
 
 # %%

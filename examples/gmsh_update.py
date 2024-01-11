@@ -2,8 +2,8 @@
 # Example of updating the gmsh file in data with some new parameters
 #
 
-from mtgo.filemanager import InputModifier
-from mtgo.gmshutils import RunGmsh
+from pyfemop.filemanager import InputModifier
+from pyfemop.gmshutils import RunGmsh
 
 input_file = '/home/rspencer/mtgo/data/gmsh_script.geo'
 im = InputModifier(input_file,'//',';')
