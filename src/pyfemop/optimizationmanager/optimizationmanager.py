@@ -156,6 +156,7 @@ class MooseOptimizationRun():
             self._algorithm.tell(infills=pop)
             self.backup()
             print('**** Generation Complete ****')
+        self.print_status()
 
     
     def run_optimal(self,pf_nums):
@@ -192,6 +193,55 @@ class MooseOptimizationRun():
         
         print('**** Running Selected Models ****')
         temp_herd.run_para(moose_vars,para_vars)  
+
+    def print_status(self):
+        """Prints the current status of the optimization. 
+        Designed to be human readable.
+        """
+        F = self._algorithm.result().F 
+        X = self._algorithm.result().X
+
+        print(self.banner())
+         
+        print('************************************************')
+        print('               Current Status                   ')
+        print('************************************************')
+        print('Completed Generations: {}'.format(self._algorithm.n_gen-1))
+        # Not sure why the below code doesn't work, (Returns 0) but can get n_evals roughly
+        #print('Completed Evaluations: {}'.format(self._algorithm.evaluator.n_eval))
+        print('Completed Evaluations: {}'.format((self._algorithm.n_gen-1)*self._algorithm.pop_size))
+        if self._algorithm.has_next():
+            print('Termination criteria not reached.')
+        else:
+            print('Algorithm terminated.')
+        print('------------------------------------------------')
+        if len(X.shape)==1:
+            print('      Single Objective Optimisation Result      ')
+            print('------------------------------------------------')
+            outstring = 'Parameters: '
+            for j,key in enumerate(self._opt_parameters):
+                outstring += '{} = {}, '.format(key,X[j])
+            
+            outstring+= 'gives result:'
+            for res in F:
+                outstring+=' {},'.format(res)
+            outstring = outstring[:-1]
+            print(outstring)
+            print('------------------------------------------------')
+        else:
+            print('    Multiobjective Optimisation Pareto Front    ')
+            print('------------------------------------------------')
+            for i in range(X.shape[0]):
+                outstring = 'Parameters: '
+                for j,key in enumerate(self._opt_parameters):
+                    outstring += '{} = {}, '.format(key,X[i,j])
+                
+                outstring+= 'gives results:'
+                for res in F:
+                    outstring+=' {},'.format(res)
+                outstring = outstring[:-1]
+                print(outstring)
+                print('------------------------------------------------')
 
 
     def run_test(self,num_its):
@@ -239,3 +289,19 @@ class MooseOptimizationRun():
             
             print(moose_vars)
             print(gmsh_vars)
+
+    def banner(self):
+        """ Just makes a nicely formatted banner
+        """
+        
+        outstring =  '________________________________________________\n'
+        outstring += ' _____       ______ ______ __  __  ____  _____  \n'
+        outstring += '|  __ \     |  ____|  ____|  \/  |/ __ \|  __ \ \n'
+        outstring += '| |__) |   _| |__  | |__  | \  / | |  | | |__) |\n'
+        outstring += '|  ___/ | | |  __| |  __| | |\/| | |  | |  ___/ \n'
+        outstring += '| |   | |_| | |    | |____| |  | | |__| | |     \n'
+        outstring += '|_|    \__, |_|    |______|_|  |_|\____/|_|     \n'
+        outstring += '        __/ |                                   \n'
+        outstring += '       |___/                                    \n'
+        outstring += '________________________________________________'
+        return outstring

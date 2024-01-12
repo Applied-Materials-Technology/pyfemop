@@ -6,6 +6,7 @@ import numpy as np
 
 from pymoo.algorithms.soo.nonconvex.ga import GA
 from pymoo.termination import get_termination
+from pymoo.termination.default import DefaultMultiObjectiveTermination
 
 from mooseherder.mooseherd import MooseHerd
 from mooseherder.inputmodifier import InputModifier
@@ -48,8 +49,16 @@ pop_size=12,
 eliminate_duplicates=True,
 save_history = True
 )
+
 # Set termination criteria for optimisation
-termination = get_termination("n_gen", 20)
+#termination = get_termination("n_gen", 2)
+termination = DefaultMultiObjectiveTermination(
+    xtol = 1e-8,
+    cvtol = 1e-6,
+    ftol = 1e-6,
+    period = 5,
+    n_max_gen = 20
+)
 
 # Define an objective function
 def displacement_match(data,endtime):
@@ -67,7 +76,7 @@ bounds  = {'e_modulus' : [0.5E9,1.5E9]}
 mor = MooseOptimizationRun('Ex1_Linear_Elastic',algorithm,termination,herd,c,bounds)
 
 # Do 1 run.
-mor.run(10)
+mor.run(20)
 
 S = mor._algorithm.result().F 
 X = mor._algorithm.result().X
