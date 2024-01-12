@@ -9,6 +9,7 @@ from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.operators.crossover.sbx import SBX
 from pymoo.operators.mutation.pm import PM
 from pymoo.operators.sampling.rnd import FloatRandomSampling
+from pymoo.algorithms.soo.nonconvex.ga import GA
 from mooseherder.mooseherd import MooseHerd
 from mooseherder.inputmodifier import InputModifier
 from mooseherder.mooseherd import MooseRunner
@@ -191,4 +192,50 @@ def maximise_stress(data,endtime):
     return -1*np.nanmax(np.array(data.data_sets[-1]['eyy']))
 # %%
 T = ExodusReader('/home/rspencer/pyfemop/examples/scripts/ex1_linear_elastic_out.e')
+# %%
+# Setup MOOSE Parameters
+moose_dir = '/home/rspencer/moose'
+moose_app_dir = '/home/rspencer/proteus'
+moose_app_name = 'proteus-opt'
+moose_input = '/home/rspencer/pyfemop/examples/scripts/ex1_linear_elastic.i'
+
+moose_modifier = InputModifier(moose_input,'#','')
+moose_runner = MooseRunner(moose_dir,moose_app_dir,moose_app_name)
+moose_vars = [moose_modifier.get_vars()]
+
+# Setup Gmsh
+gmsh_path = '/home/rspencer/src/gmsh/bin/gmsh'
+gmsh_input = '/home/rspencer/pyfemop/examples/scripts/gmsh_3P_spline_3d.geo'
+
+gmsh_runner = GmshRunner(gmsh_path)
+gmsh_runner.set_input_file(gmsh_input)
+gmsh_modifier = InputModifier(gmsh_input,'//',';')
+
+herd = MooseHerd(moose_runner,moose_modifier,gmsh_runner,gmsh_modifier)
+
+# Create algorithm. Use SOO GA as only one objective
+algorithm = GA(
+pop_size=12,
+eliminate_duplicates=True,
+save_history = True
+)
+# Set termination criteria for optimisation
+termination = get_termination("n_gen", 10)
+
+# Define an objective function
+def displacement_match(data):
+    # Want to get the displacement at final timestep to be close to 0.0446297
+    return np.abs(np.max(data)-0.0446297)
+
+# Instance cost function
+c = CostFunction(None,[displacement_match],None)
+
+# Assign bounds
+bounds  = {'p0' : [1.5,2.5],'p1' : [1.5,2.5]}
+
+# Create run
+mor = MooseOptimizationRun('Test_Gmsh_Only',algorithm,termination,herd,c,bounds)
+
+
+mor.run_test(1)
 # %%

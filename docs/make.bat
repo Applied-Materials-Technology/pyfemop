@@ -9,7 +9,7 @@ if "%SPHINXBUILD%" == "" (
 )
 set SOURCEDIR=.
 set BUILDDIR=_build
-set SPHINXPROJ=mtgo
+set SPHINXPROJ=pyfemop
 
 if "%1" == "" goto help
 

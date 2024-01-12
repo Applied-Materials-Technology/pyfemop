@@ -31,6 +31,7 @@ class MooseOptimizationRun():
         self._herd = herd
         self._cost_function = cost_function
         self._parameter_space = parameter_space
+        self._opt_parameters = [x for x in parameter_space.keys()]
         self._n_var = len(parameter_space)
         self._n_obj = self._cost_function.n_obj
         lb=[]
@@ -48,8 +49,36 @@ class MooseOptimizationRun():
                   xl=self._bounds[0],
                   xu=self._bounds[1])
         
+        self.assign_parameters()
+        
         # Setup algorithm
         self._algorithm.setup(self._problem,termination=termination)
+
+    def assign_parameters(self):
+        """Get lists of parameters for moose and gmsh from the herd 
+        and determine which optimised parameters belong where.
+        """
+
+        # Default assumption is we will be running moose and gmsh
+        self._mod_moose = True
+        self._mod_gmsh = True
+
+        self._moose_params = [x for x in self._herd._moose_modifier._vars.keys()]
+        if self._herd._gmsh_modifier is not None:
+            self._gmsh_params = [x for x in self._herd._gmsh_modifier._vars.keys()]
+        else:
+            # If there's no gmsh runner, then we're not running gmsh
+            self._gmsh_params = []
+            #self._mod_gmsh = False # Assuming you'd only want to run gmsh if you were updating the geometry
+        
+        self._moose_opt_params = list(set(self._moose_params)&set(self._opt_parameters))
+        self._gmsh_opt_params = list(set(self._gmsh_params)&set(self._opt_parameters))
+        
+        if not self._moose_opt_params:
+            self._mod_moose = False
+        # Catch the case where we may want to run gmsh but not update it.
+        if not self._gmsh_opt_params:
+            self._mod_gmsh = False
 
     def backup(self):
         """Create a pickle dump of the class instance.
@@ -83,17 +112,27 @@ class MooseOptimizationRun():
 
             #Run moose for all x.
             #Moose herder needs list of dicts. With correctly named parameters. 
-            para_vars = list()
-            para_names = [x for x in self._parameter_space.keys()]
+            # The order of parameters will be the same as in the bounds
+            
+            # Convert x to list of dict
+            para_vars = []
             for i in range(x.shape[0]):
                 para_dict = dict()
-                for j in range(len(para_names)):
-                    para_dict[para_names[j]] = x[i,j]
+                for j,key in enumerate(self._opt_parameters):
+                    para_dict[key] = x[i,j]
                 para_vars.append(para_dict)
+            
+            if self._mod_moose == False: # Don't need to change moose
+                moose_vars = [self._herd._moose_modifier.get_vars()] 
+            else: 
+                moose_vars = [{key: l[key] for key in self._moose_opt_params} for l in para_vars]
 
-            moose_vars = [self._herd._moose_modifier.get_vars()]  
-            #print(self._herd._run_dir)     
-            self._herd.run_para(moose_vars,para_vars)
+            if self._mod_gmsh == False: # Don't need to change gmsh
+                gmsh_vars = None 
+            else: 
+                gmsh_vars = [{key: l[key] for key in self._gmsh_opt_params} for l in para_vars]
+   
+            self._herd.run_para(moose_vars,gmsh_vars)
             print('Run time = '+str(self._herd.get_sweep_time())+' seconds')
 
             # Read in moose results and get cost. 
@@ -103,7 +142,7 @@ class MooseOptimizationRun():
             else:
                 # For working with examples relying on herder only.
                 vars_to_read = ['disp_y']
-                data_list = self._herd.read_results(vars_to_read)
+                data_list = self._herd.read_results_para(vars_to_read,self._herd._sweep_iter)
 
             costs = np.array(self._cost_function.evaluate_parallel(data_list))
             F = []
@@ -153,4 +192,50 @@ class MooseOptimizationRun():
         
         print('**** Running Selected Models ****')
         temp_herd.run_para(moose_vars,para_vars)  
-        
+
+
+    def run_test(self,num_its):
+        """Run the optimization for n_its number of generations.
+        Only if the algorithm hasn't terminated.
+
+        Args:
+            num_its (int): _description_
+        """
+        for n_gen in range(num_its):
+            #Check if termination criteria has been met. 
+            if not self._algorithm.has_next():
+                # Kill the loop if the algorithm has terminated.
+                break
+            print('*****Running Optimization Generation {}*****'.format(self._algorithm.n_gen))
+            # Ask for the next solution to be implemented
+            self._herd.clear_dirs()
+            self._herd.create_dirs()
+            pop = self._algorithm.ask()
+            
+            #Get parameters
+            x = pop.get("X")
+
+            #Run moose for all x.
+            #Moose herder needs list of dicts. With correctly named parameters. 
+            # The order of parameters will be the same as in the bounds
+            
+            # Convert x to list of dict
+            para_vars = []
+            for i in range(x.shape[0]):
+                para_dict = dict()
+                for j,key in enumerate(self._opt_parameters):
+                    para_dict[key] = x[i,j]
+                para_vars.append(para_dict)
+            
+            if self._mod_moose == False: # Don't need to change moose
+                moose_vars = [self._herd._moose_modifier.get_vars()] 
+            else: 
+                moose_vars = [{key: l[key] for key in self._moose_opt_params} for l in para_vars]
+
+            if self._mod_gmsh == False: # Don't need to change gmsh
+                gmsh_vars = None 
+            else: 
+                gmsh_vars = [{key: l[key] for key in self._gmsh_opt_params} for l in para_vars]
+            
+            print(moose_vars)
+            print(gmsh_vars)

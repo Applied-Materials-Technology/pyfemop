@@ -6,7 +6,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = u"mtgo"
+project = u"pyfemop"
 copyright = u"2023, Rory Spencer"
 author = u"Rory Spencer"
 
