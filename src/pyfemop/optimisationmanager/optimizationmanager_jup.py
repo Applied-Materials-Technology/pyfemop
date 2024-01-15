@@ -17,15 +17,15 @@ from pymoo.operators.crossover.sbx import SBX
 from pymoo.operators.mutation.pm import PM
 from pymoo.operators.sampling.rnd import FloatRandomSampling
 
-from pyfemop.optimizationmanager.dummysolver import dummy_solve
-from pyfemop.optimizationmanager.dummysolver import dummy_solve_moo
-from pyfemop.optimizationmanager.dummysolver import sphere
-from pyfemop.optimizationmanager.dummysolver import rastigrin
-from pyfemop.optimizationmanager.dummysolver import rosen
+from pyfemop.optimisationmanager.dummysolver import dummy_solve
+from pyfemop.optimisationmanager.dummysolver import dummy_solve_moo
+from pyfemop.optimisationmanager.dummysolver import sphere
+from pyfemop.optimisationmanager.dummysolver import rastigrin
+from pyfemop.optimisationmanager.dummysolver import rosen
 
-from pyfemop.optimizationmanager.costfunctions import CostFunction
-from pyfemop.optimizationmanager.costfunctions import min_plastic
-from pyfemop.optimizationmanager.costfunctions import creep_range
+from pyfemop.optimisationmanager.costfunctions import CostFunction
+from pyfemop.optimisationmanager.costfunctions import min_plastic
+from pyfemop.optimisationmanager.costfunctions import creep_range
 
 from mooseherder.mooseherd import MooseHerd
 from mooseherder.inputmodifier import InputModifier

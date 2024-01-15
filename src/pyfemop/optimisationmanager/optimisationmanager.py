@@ -12,7 +12,7 @@ from mooseherder.mooseherd import MooseHerd
 import pickle
 import copy
 
-class MooseOptimizationRun():
+class MooseOptimisationRun():
 
     def __init__(self,name,algorithm,termination,herd,cost_function,parameter_space):
         """Class to contain everything needed for an optimization run 
@@ -79,14 +79,48 @@ class MooseOptimizationRun():
         # Catch the case where we may want to run gmsh but not update it.
         if not self._gmsh_opt_params:
             self._mod_gmsh = False
+    def get_backup_path(self):
+        """Get a path to save the pickle backup to.
+
+        Returns:
+            str: Path to the backup pickle.
+        """
+        backup_path = self._herd._base_dir + self._name.replace(' ','_').replace('.','_') + '.pickle'
+        return backup_path
 
     def backup(self):
         """Create a pickle dump of the class instance.
         """
-        pickle_path = self._herd._base_dir + self._name.replace(' ','_').replace('.','_') + '.pickle'
+        #pickle_path = self._herd._base_dir + self._name.replace(' ','_').replace('.','_') + '.pickle'
         #print(pickle_path)
-        with open(pickle_path,'wb') as f:
+        with open(self.get_backup_path(),'wb') as f:
             pickle.dump(self,f,pickle.HIGHEST_PROTOCOL)
+
+    @classmethod
+    def restore_backup(cls,backup_path):
+        """        
+        Restores a run from a run_archive backup.
+                      
+
+        Parameters
+        ----------
+        cls : MooseOptimisationRun() instance
+            Instance to be restored.
+        backup_path : string
+            Path to pickled file.
+
+        Returns
+        -------
+        cls : MooseOptimisationRun() instance.
+           Restored MooseOptimisationRun instance
+
+        """
+        
+        with open(backup_path, 'rb') as f:
+            # Pickle the 'data' dictionary using the highest protocol available.
+            cls = pickle.load(f,encoding='latin-1')
+        
+        return cls
 
 
     def run(self,num_its):
@@ -141,8 +175,8 @@ class MooseOptimizationRun():
                 data_list = self._herd.read_results_para_generic(self._reader)
             else:
                 # For working with examples relying on herder only.
-                vars_to_read = ['disp_y']
-                data_list = self._herd.read_results_para(vars_to_read,self._herd._sweep_iter)
+                vars_to_read = ['disp_y','vonmises_stress']
+                data_list = self._herd.read_results_para(vars_to_read,self._herd._sweep_iter,[1,1])
 
             costs = np.array(self._cost_function.evaluate_parallel(data_list))
             F = []

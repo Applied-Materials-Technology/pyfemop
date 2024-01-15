@@ -3,9 +3,9 @@
 #
 
 import pytest
-from pyfemop.optimizationmanager.costfunctions import CostFunction
-from pyfemop.optimizationmanager.costfunctions import min_plastic
-from pyfemop.optimizationmanager.costfunctions import creep_range
+from pyfemop.optimisationmanager.costfunctions import CostFunction
+from pyfemop.optimisationmanager.costfunctions import min_plastic
+from pyfemop.optimisationmanager.costfunctions import creep_range
 
 from mooseherder.outputreader import output_csv_reader
 

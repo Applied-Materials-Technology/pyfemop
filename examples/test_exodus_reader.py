@@ -4,27 +4,28 @@
 #%% Imports
 import numpy as np
 
-from pyfemop.optimizationmanager.optimizationmanager import MooseOptimizationRun
+from pyfemop.optimisationmanager.optimisationmanager import MooseOptimisationRun
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.operators.crossover.sbx import SBX
 from pymoo.operators.mutation.pm import PM
 from pymoo.operators.sampling.rnd import FloatRandomSampling
 from mooseherder.mooseherd import MooseHerd
 from mooseherder.inputmodifier import InputModifier
-from mooseherder.outputreader import output_csv_reader
+from mooseherder.exodusreader import ExodusReader
+#from mooseherder.outputreader import output_csv_reader
 
-from pyfemop.optimizationmanager.costfunctions import CostFunction
-from pyfemop.optimizationmanager.costfunctions import min_plastic
-from pyfemop.optimizationmanager.costfunctions import creep_range
-from pyfemop.optimizationmanager.costfunctions import max_stress
-from pyfemop.optimizationmanager.costfunctions import avg_creep
+from pyfemop.optimisationmanager.costfunctions import CostFunction
+from pyfemop.optimisationmanager.costfunctions import min_plastic
+from pyfemop.optimisationmanager.costfunctions import creep_range
+from pyfemop.optimisationmanager.costfunctions import max_stress
+from pyfemop.optimisationmanager.costfunctions import avg_creep
 from pymoo.termination import get_termination
 import pickle
 from matplotlib import pyplot as plt
 import os
 import sys
-from materialmodeloptimizer.fullfield.fullfielddata import FullFieldData
-from materialmodeloptimizer.fullfielddata.fullfielddatagrid import FullFieldDataGrid
+#from materialmodeloptimizer.fullfield.fullfielddata import FullFieldData
+#from materialmodeloptimizer.fullfielddata.fullfielddatagrid import FullFieldDataGrid
 
 #from mtgo.exodus import exomerge3
 # Don't like the below but it works for now
@@ -65,4 +66,6 @@ plastic_yy = f.get_variable_values('stress_yy',72)
 
 # %%
 f.variables()
+# %%
+f = ExodusReader('/home/rspencer/pyfemop/examples/moose-workdir-1/moose-sim-1_out.e')
 # %%

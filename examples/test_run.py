@@ -4,7 +4,7 @@
 #%% Imports
 import numpy as np
 
-from pyfemop.optimizationmanager.optimizationmanager import MooseOptimizationRun
+from pyfemop.optimisationmanager.optimisationmanager import MooseOptimizationRun
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.operators.crossover.sbx import SBX
 from pymoo.operators.mutation.pm import PM
@@ -17,12 +17,12 @@ from mooseherder.gmshrunner import GmshRunner
 from mooseherder.exodusreader import ExodusReader
 import copy
 
-from pyfemop.optimizationmanager.costfunctions import CostFunction
-from pyfemop.optimizationmanager.costfunctions import min_plastic
-from pyfemop.optimizationmanager.costfunctions import creep_range
-from pyfemop.optimizationmanager.costfunctions import maximise_strain
-from pyfemop.optimizationmanager.costfunctions import maximise_strain_deviation
-from pyfemop.optimizationmanager.costfunctions import avg_creep
+from pyfemop.optimisationmanager.costfunctions import CostFunction
+from pyfemop.optimisationmanager.costfunctions import min_plastic
+from pyfemop.optimisationmanager.costfunctions import creep_range
+from pyfemop.optimisationmanager.costfunctions import maximise_strain
+from pyfemop.optimisationmanager.costfunctions import maximise_strain_deviation
+from pyfemop.optimisationmanager.costfunctions import avg_creep
 from pymoo.termination import get_termination
 import pickle
 from matplotlib import pyplot as plt

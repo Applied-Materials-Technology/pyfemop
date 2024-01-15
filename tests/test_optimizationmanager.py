@@ -5,7 +5,7 @@
 import pytest
 import numpy as np
 
-from pyfemop.optimizationmanager.optimizationmanager import MooseOptimizationRun
+from pyfemop.optimisationmanager.optimisationmanager import MooseOptimizationRun
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.operators.crossover.sbx import SBX
 from pymoo.operators.mutation.pm import PM
@@ -15,9 +15,9 @@ from mooseherder.inputmodifier import InputModifier
 from mooseherder.mooseherd import MooseRunner
 from mooseherder.gmshrunner import GmshRunner
 
-from pyfemop.optimizationmanager.costfunctions import CostFunction
-from pyfemop.optimizationmanager.costfunctions import min_plastic
-from pyfemop.optimizationmanager.costfunctions import creep_range
+from pyfemop.optimisationmanager.costfunctions import CostFunction
+from pyfemop.optimisationmanager.costfunctions import min_plastic
+from pyfemop.optimisationmanager.costfunctions import creep_range
 from pymoo.termination import get_termination
 
 #from pycoatl.spatialdata.importmoose import moose_to_spatialdata

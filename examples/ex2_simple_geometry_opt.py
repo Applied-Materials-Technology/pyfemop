@@ -5,34 +5,41 @@
 import numpy as np
 
 from pymoo.algorithms.soo.nonconvex.ga import GA
-from pymoo.termination import get_termination
 from pymoo.termination.default import DefaultMultiObjectiveTermination
 
 from mooseherder.mooseherd import MooseHerd
 from mooseherder.inputmodifier import InputModifier
 from mooseherder.mooseherd import MooseRunner
+from mooseherder.mooseherd import GmshRunner
 
 from pyfemop.optimisationmanager.optimisationmanager import MooseOptimisationRun
 from pyfemop.optimisationmanager.costfunctions import CostFunction
-from pyfemop.mooseutils.outputreaders import OutputExodusReader
 
 print('------------------------------------------------')
-print('                  Example-1                     ')
-print('          Elastic modulus optimisation          ')
+print('                  Example-2                     ')
+print('          Simple Geometry Optimisation          ')
 print('------------------------------------------------')
 
 # Setup MOOSE Parameters
 moose_dir = '/home/rspencer/moose'
 moose_app_dir = '/home/rspencer/proteus'
 moose_app_name = 'proteus-opt'
-moose_input = '/home/rspencer/pyfemop/examples/scripts/ex1_linear_elastic.i'
+moose_input = '/home/rspencer/pyfemop/examples/scripts/ex2_simple_geometry.i'
 
 moose_modifier = InputModifier(moose_input,'#','')
 moose_runner = MooseRunner(moose_dir,moose_app_dir,moose_app_name)
 moose_vars = [moose_modifier.get_vars()]
 
+# Setup Gmsh
+gmsh_path = '/home/rspencer/src/gmsh/bin/gmsh'#os.path.join(user_dir,'moose-workdir/gmsh/bin/gmsh')
+gmsh_input = '/home/rspencer/pyfemop/examples/scripts/gmsh_2d_simple_geom.geo'
+
+gmsh_runner = GmshRunner(gmsh_path)
+gmsh_runner.set_input_file(gmsh_input)
+gmsh_modifier = InputModifier(gmsh_input,'//',';')
+
 # Start the herd and create working directories
-herd = MooseHerd(moose_runner,moose_modifier)
+herd = MooseHerd(moose_runner,moose_modifier,gmsh_runner,gmsh_modifier)
 # Don't have to clear directories on creation of the herd but we do so here
 # so that directory creation doesn't raise errors
 
@@ -61,29 +68,32 @@ termination = DefaultMultiObjectiveTermination(
 )
 
 # Define an objective function
-def displacement_match(data,endtime):
+def stress_match(data,endtime):
     # Want to get the displacement at final timestep to be close to 0.0446297
-    
-    return np.abs(np.max(data['disp_y'])-0.0446297)
+    cur_stress = data['vonmises_stress']
+    if cur_stress is not None:
+        cost = np.abs(np.max(cur_stress)-6.0226E7)
+    else:
+        cost = 1E10                        
+    return cost
 
 # Instance cost function
-c = CostFunction(None,[displacement_match],None)
+c = CostFunction(None,[stress_match],None)
 
 # Assign bounds
-bounds  = {'e_modulus' : [0.5E9,1.5E9]}
+bounds  = {'neckWidth' : [0.5,1.]}
 
 # Create run
-mor = MooseOptimisationRun('ex1_Linear_Elastic',algorithm,termination,herd,c,bounds)
+mor = MooseOptimisationRun('ex2_simple_geometry',algorithm,termination,herd,c,bounds)
 
-# Do 1 run.
+# Do run.
 mor.run(20)
 
 S = mor._algorithm.result().F 
 X = mor._algorithm.result().X
-print('Target Elastic Modulus = 1E9')
-print('Optimal Elastic Modulus = {}'.format(X[0]))
-print('Absolute Difference = {}'.format(X[0]-1E9))
-print('% Difference = {}'.format(100*(X[0]-1E9)/X[0]))
+print('Target Neck Width = 0.8')
+print('Optimal Neck Width = {}'.format(X[0]))
+print('Absolute Difference = {}'.format(X[0]-0.8))
+print('% Difference = {}'.format(100*(X[0]-0.8)/X[0]))
 print('The optimisation run is backed up to:')
 print('{}'.format(mor.get_backup_path()))
-print('This can be restored using MooseOptimisationRun.restore_backup().')
