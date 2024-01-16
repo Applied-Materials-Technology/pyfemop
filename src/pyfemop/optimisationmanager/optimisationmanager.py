@@ -193,7 +193,8 @@ class MooseOptimisationRun():
             
 
             static = StaticProblem(self._problem,F=F)
-            Evaluator().eval(static,pop)
+            #Evaluator().eval(static,pop)
+            self._algorithm.evaluator.eval(static,pop)
 
             self._algorithm.tell(infills=pop)
             self.backup()
