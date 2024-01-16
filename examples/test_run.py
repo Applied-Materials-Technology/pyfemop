@@ -3,8 +3,9 @@
 #
 #%% Imports
 import numpy as np
+import dill
 
-from pyfemop.optimisationmanager.optimisationmanager import MooseOptimizationRun
+from pyfemop.optimisationmanager.optimisationmanager import MooseOptimisationRun
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.operators.crossover.sbx import SBX
 from pymoo.operators.mutation.pm import PM
@@ -22,7 +23,7 @@ from pyfemop.optimisationmanager.costfunctions import min_plastic
 from pyfemop.optimisationmanager.costfunctions import creep_range
 from pyfemop.optimisationmanager.costfunctions import maximise_strain
 from pyfemop.optimisationmanager.costfunctions import maximise_strain_deviation
-from pyfemop.optimisationmanager.costfunctions import avg_creep
+from pyfemop.optimisationmanager.costfunctions import ObjectiveFunctionBase
 from pymoo.termination import get_termination
 import pickle
 from matplotlib import pyplot as plt
@@ -79,7 +80,7 @@ bounds  = {'h1x' : [-1.,1],'h1y' : [-0.5,0.5],'h1r' : [0.1,0.9],'h2x' : [-1.,1],
 #bounds  =(np.array([0.35,-0.5]),np.array([0.8,0.5]))
 # Might need to fix the bounds issue, i.e. if model fails then penalise
 #bounds  =(np.array([-1.,-0.5,0.1,-1.,-0.5,0.1]),np.array([1.,0.5,0.9,1.0,0.5,0.9]))
-mor = MooseOptimizationRun('Run_SD_max_dev_circ_T',algorithm,termination,herd,c,bounds)
+mor = MooseOptimisationRun('Run_SD_max_dev_circ_T',algorithm,termination,herd,c,bounds)
 
 #%%
 mor.run(1)
@@ -238,4 +239,38 @@ mor = MooseOptimizationRun('Test_Gmsh_Only',algorithm,termination,herd,c,bounds)
 
 
 mor.run_test(1)
+# %%
+class stress_function(ObjectiveFunctionBase):
+    def calculate(data,endtime):
+        cur_stress = data['vonmises_stress']
+        if cur_stress is not None:
+            cost = np.abs(np.max(cur_stress)-6.0226E7)
+        else:
+            cost = 1E10                        
+        return cost
+c = CostFunction(reader,[stress_function.calculate],2.16E7)   
+moose_dir = '/home/rspencer/moose'
+moose_app_dir = '/home/rspencer/proteus'
+moose_app_name = 'proteus-opt'
+moose_input = '/home/rspencer/pyfemop/examples/scripts/ex1_linear_elastic.i'
+
+moose_modifier = InputModifier(moose_input,'#','')
+moose_runner = MooseRunner(moose_dir,moose_app_dir,moose_app_name)
+moose_vars = [moose_modifier.get_vars()]
+
+herd = MooseHerd(moose_runner,moose_modifier)
+mor = MooseOptimisationRun('Test_Pickle',algorithm,termination,herd,c,bounds)
+#mor.backup()
+# %%
+t = MooseOptimisationRun.restore_backup('/home/rspencer/pyfemop/examples/scripts/Test_Pickle.pickle')
+# %%
+with open('/home/rspencer/pyfemop/examples/scripts/Test_Pickle.pickle','wb') as f:
+    dill.dump(mor,f,pickle.HIGHEST_PROTOCOL)
+
+# %%
+with open('/home/rspencer/pyfemop/examples/ex1_Linear_Elastic.pickle', 'rb') as f:
+    # Pickle the 'data' dictionary using the highest protocol available.
+    t = dill.load(f)
+# %%
+t = MooseOptimisationRun.restore_backup('/home/rspencer/pyfemop/examples/ex1_Linear_Elastic.pickle')
 # %%

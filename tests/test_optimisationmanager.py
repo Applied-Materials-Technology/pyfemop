@@ -5,7 +5,7 @@
 import pytest
 import numpy as np
 
-from pyfemop.optimisationmanager.optimisationmanager import MooseOptimizationRun
+from pyfemop.optimisationmanager.optimisationmanager import MooseOptimisationRun
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.operators.crossover.sbx import SBX
 from pymoo.operators.mutation.pm import PM
@@ -17,7 +17,7 @@ from mooseherder.gmshrunner import GmshRunner
 
 from pyfemop.optimisationmanager.costfunctions import CostFunction
 from pyfemop.optimisationmanager.costfunctions import min_plastic
-from pyfemop.optimisationmanager.costfunctions import creep_range
+from pyfemop.optimisationmanager.costfunctions import ObjectiveFunctionBase
 from pymoo.termination import get_termination
 
 #from pycoatl.spatialdata.importmoose import moose_to_spatialdata
@@ -57,7 +57,7 @@ def test_moose_only():
     bounds  = {'e_modulus' : [0.5E9,2E9]}
 
     # Create run
-    mor = MooseOptimizationRun('Test_MOOSE_Only',algorithm,termination,herd,c,bounds)
+    mor = MooseOptimisationRun('Test_MOOSE_Only',algorithm,termination,herd,c,bounds)
 
     assert mor._n_obj ==1
     assert mor._n_var ==1
@@ -112,7 +112,7 @@ def test_gmsh_only():
     bounds  = {'p0' : [1.5,2.5],'p1' : [1.5,2.5]}
 
     # Create run
-    mor = MooseOptimizationRun('Test_Gmsh_Only',algorithm,termination,herd,c,bounds)
+    mor = MooseOptimisationRun('Test_Gmsh_Only',algorithm,termination,herd,c,bounds)
 
     assert mor._moose_params == ['e_modulus']
     assert mor._moose_opt_params == []
@@ -166,7 +166,7 @@ def test_both():
     bounds  = {'e_modulus':[0.5e9,2e9],'p0' : [1.5,2.5],'p1' : [1.5,2.5]}
 
     # Create run
-    mor = MooseOptimizationRun('Test_Both',algorithm,termination,herd,c,bounds)
+    mor = MooseOptimisationRun('Test_Both',algorithm,termination,herd,c,bounds)
 
     assert mor._moose_params == ['e_modulus']
     assert mor._moose_opt_params == ['e_modulus']
@@ -175,3 +175,58 @@ def test_both():
     assert mor._mod_gmsh == True
     assert mor._mod_moose == True
 
+
+def test_pickling():
+
+    # Setup MOOSE Parameters
+    moose_dir = '/home/rspencer/moose'
+    moose_app_dir = '/home/rspencer/proteus'
+    moose_app_name = 'proteus-opt'
+    moose_input = '/home/rspencer/pyfemop/examples/scripts/ex1_linear_elastic.i'
+
+    moose_modifier = InputModifier(moose_input,'#','')
+    moose_runner = MooseRunner(moose_dir,moose_app_dir,moose_app_name)
+    moose_vars = [moose_modifier.get_vars()]
+
+    herd = MooseHerd(moose_runner,moose_modifier)
+
+    # Create algorithm. Use SOO GA as only one objective
+    algorithm = GA(
+    pop_size=12,
+    eliminate_duplicates=True,
+    save_history = True
+    )
+    # Set termination criteria for optimisation
+    termination = get_termination("n_gen", 10)
+
+    # Define an objective function
+    class stress_function(ObjectiveFunctionBase):
+        def calculate(data,endtime):
+            cur_stress = data['vonmises_stress']
+            if cur_stress is not None:
+                cost = np.abs(np.max(cur_stress)-6.0226E7)
+            else:
+                cost = 1E10                        
+            return cost
+
+    # Instance cost function
+    c = CostFunction(None,[stress_function],None)
+
+    # Assign bounds
+    bounds  = {'e_modulus' : [0.5E9,2E9]}
+
+    # Create run
+    mor = MooseOptimisationRun('Test_Pickling',algorithm,termination,herd,c,bounds)
+    mor.backup()
+    
+    restore = MooseOptimisationRun.restore_backup(mor.backup_path)
+
+    assert restore._n_obj ==1
+    assert restore._n_var ==1
+    assert restore._problem.xl == pytest.approx([0.5E9])
+    assert restore._problem.xu == pytest.approx([2E9])
+    assert restore._moose_params == ['e_modulus']
+    assert restore._moose_opt_params == ['e_modulus']
+    assert restore._gmsh_opt_params == []
+    assert restore._mod_gmsh == False
+    assert restore._mod_moose == True

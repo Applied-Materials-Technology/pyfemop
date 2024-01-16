@@ -1,11 +1,9 @@
-# %%
-# Intending to use Pymoo to optimize. 
-#
 
 import numpy as np
 from pymoo.core.problem import Problem
 from pymoo.problems.static import StaticProblem
 from pymoo.core.evaluator import Evaluator
+import dill
 
 from mooseherder.mooseherd import MooseHerd
 
@@ -80,10 +78,10 @@ class MooseOptimisationRun():
         if not self._gmsh_opt_params:
             self._mod_gmsh = False
     def get_backup_path(self):
-        """Get a path to save the pickle backup to.
+        """Get a path to save the dill backup to.
 
         Returns:
-            str: Path to the backup pickle.
+            str: Path to the backup dill.
         """
         backup_path = self._herd._base_dir + self._name.replace(' ','_').replace('.','_') + '.pickle'
         return backup_path
@@ -94,12 +92,12 @@ class MooseOptimisationRun():
         #pickle_path = self._herd._base_dir + self._name.replace(' ','_').replace('.','_') + '.pickle'
         #print(pickle_path)
         with open(self.get_backup_path(),'wb') as f:
-            pickle.dump(self,f,pickle.HIGHEST_PROTOCOL)
+            dill.dump(self,f,dill.HIGHEST_PROTOCOL)
 
     @classmethod
     def restore_backup(cls,backup_path):
         """        
-        Restores a run from a run_archive backup.
+        Restores a run from a backup.
                       
 
         Parameters
@@ -118,7 +116,7 @@ class MooseOptimisationRun():
         
         with open(backup_path, 'rb') as f:
             # Pickle the 'data' dictionary using the highest protocol available.
-            cls = pickle.load(f,encoding='latin-1')
+            cls = dill.load(f)
         
         return cls
 
@@ -135,7 +133,12 @@ class MooseOptimisationRun():
             if not self._algorithm.has_next():
                 # Kill the loop if the algorithm has terminated.
                 break
-            print('*****Running Optimization Generation {}*****'.format(self._algorithm.n_gen))
+            print('************************************************')
+            cur_gen = self._algorithm.n_gen
+            if cur_gen is None:
+                cur_gen = 0
+            print('       Running Optimization Generation {}     '.format(cur_gen))
+            print('------------------------------------------------')
             # Ask for the next solution to be implemented
             self._herd.clear_dirs()
             self._herd.create_dirs()
@@ -167,16 +170,21 @@ class MooseOptimisationRun():
                 gmsh_vars = [{key: l[key] for key in self._gmsh_opt_params} for l in para_vars]
    
             self._herd.run_para(moose_vars,gmsh_vars)
-            print('Run time = '+str(self._herd.get_sweep_time())+' seconds')
-
+            print('        Run time = {:.2f} seconds.'.format(self._herd.get_sweep_time()))
+            print('------------------------------------------------')
             # Read in moose results and get cost. 
-            print('*****Reading Data*****')
+            print('                Reading Data                    ')
+            print('------------------------------------------------')
+            
             if self._reader is not None:
                 data_list = self._herd.read_results_para_generic(self._reader)
             else:
                 # For working with examples relying on herder only.
                 vars_to_read = ['disp_y','vonmises_stress']
                 data_list = self._herd.read_results_para(vars_to_read,self._herd._sweep_iter,[1,1])
+            
+            print('            Calculating Objectives              ')
+            print('------------------------------------------------')
 
             costs = np.array(self._cost_function.evaluate_parallel(data_list))
             F = []
@@ -189,7 +197,9 @@ class MooseOptimisationRun():
 
             self._algorithm.tell(infills=pop)
             self.backup()
-            print('**** Generation Complete ****')
+            print('              Generation Complete               ')
+            print('************************************************')
+            print('')
         self.print_status()
 
     
@@ -244,6 +254,7 @@ class MooseOptimisationRun():
         # Not sure why the below code doesn't work, (Returns 0) but can get n_evals roughly
         #print('Completed Evaluations: {}'.format(self._algorithm.evaluator.n_eval))
         print('Completed Evaluations: {}'.format((self._algorithm.n_gen-1)*self._algorithm.pop_size))
+        # Doesn't seem like there's a way to get which termination tripped on the algorithm
         if self._algorithm.has_next():
             print('Termination criteria not reached.')
         else:
@@ -252,11 +263,11 @@ class MooseOptimisationRun():
         if len(X.shape)==1:
             print('      Single Objective Optimisation Result      ')
             print('------------------------------------------------')
-            outstring = 'Parameters: '
+            outstring = 'Parameters:\n'
             for j,key in enumerate(self._opt_parameters):
                 outstring += '{} = {}, '.format(key,X[j])
             
-            outstring+= 'gives result:'
+            outstring+= '\ngives result:\n'
             for res in F:
                 outstring+=' {},'.format(res)
             outstring = outstring[:-1]

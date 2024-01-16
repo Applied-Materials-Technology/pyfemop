@@ -72,6 +72,22 @@ class CostFunction():
         return f_list
 
 
+class ObjectiveFunctionBase():
+    """Base class for cost function.
+    """
+    def calculate(data,endtime):
+        """To be overwritten, calculates cost function
+
+        Args:
+            data (dict/SpatialData): Data to be used, can be any format 
+            endtime (float): Endtime of the simulation, if required
+
+        Returns:
+            float: the cost associated with this objective
+        """
+
+        return None
+
 
 
 # Define some functions to use as trials
