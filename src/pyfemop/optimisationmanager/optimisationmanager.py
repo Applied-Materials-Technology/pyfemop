@@ -136,7 +136,7 @@ class MooseOptimisationRun():
             print('************************************************')
             cur_gen = self._algorithm.n_gen
             if cur_gen is None:
-                cur_gen = 0
+                cur_gen = 1
             print('       Running Optimization Generation {}     '.format(cur_gen))
             print('------------------------------------------------')
             # Ask for the next solution to be implemented
@@ -266,7 +266,7 @@ class MooseOptimisationRun():
             print('------------------------------------------------')
             outstring = 'Parameters:\n'
             for j,key in enumerate(self._opt_parameters):
-                outstring += '{} = {}, '.format(key,X[j])
+                outstring += '{} = {},\n'.format(key,X[j])
             
             outstring+= '\ngives result:\n'
             for res in F:
