@@ -9,8 +9,11 @@ from pymoo.termination.default import DefaultMultiObjectiveTermination
 
 from mooseherder.mooseherd import MooseHerd
 from mooseherder.inputmodifier import InputModifier
-from mooseherder.mooseherd import MooseRunner
-from mooseherder.mooseherd import GmshRunner
+from mooseherder import MooseRunner
+from mooseherder import GmshRunner
+from mooseherder import DirectoryManager
+from mooseherder import MooseConfig
+from pathlib import Path
 
 from pyfemop.optimisationmanager.optimisationmanager import MooseOptimisationRun
 from pyfemop.optimisationmanager.costfunctions import CostFunction
@@ -20,35 +23,54 @@ print('                  Example-2                     ')
 print('          Simple Geometry Optimisation          ')
 print('------------------------------------------------')
 
-# Setup MOOSE Parameters
-moose_dir = '/home/rspencer/moose'
-moose_app_dir = '/home/rspencer/proteus'
-moose_app_name = 'proteus-opt'
-moose_input = '/home/rspencer/pyfemop/examples/scripts/ex2_simple_geometry.i'
+config = {'main_path': Path.home()/ 'projects/moose',
+        'app_path': Path.home() / 'projects/sloth',
+        'app_name': 'sloth-opt'}
 
+moose_config = MooseConfig(config)
+
+save_path = Path.cwd() / 'moose-config.json'
+moose_config.save_config(save_path)
+
+
+moose_input = Path('/home/rspencer/pyfemop/examples/scripts/ex2_simple_geometry.i')
 moose_modifier = InputModifier(moose_input,'#','')
-moose_runner = MooseRunner(moose_dir,moose_app_dir,moose_app_name)
-moose_vars = [moose_modifier.get_vars()]
+
+config_path = Path.cwd() / 'moose-config.json'
+moose_config = MooseConfig().read_config(config_path)
+
+moose_runner = MooseRunner(moose_config)
+moose_runner.set_run_opts(n_tasks = 1,
+                        n_threads = 1,
+                        redirect_out = True)
+
+dir_manager = DirectoryManager(n_dirs=4)
+
 
 # Setup Gmsh
-gmsh_path = '/home/rspencer/src/gmsh/bin/gmsh'#os.path.join(user_dir,'moose-workdir/gmsh/bin/gmsh')
-gmsh_input = '/home/rspencer/pyfemop/examples/scripts/gmsh_2d_simple_geom.geo'
 
-gmsh_runner = GmshRunner(gmsh_path)
-gmsh_runner.set_input_file(gmsh_input)
+# Setup Gmsh
+gmsh_input = Path('/home/rspencer/pyfemop/examples/scripts/gmsh_2d_simple_geom.geo')
 gmsh_modifier = InputModifier(gmsh_input,'//',';')
 
+gmsh_path = Path.home() / 'src/gmsh/bin/gmsh'
+gmsh_runner = GmshRunner(gmsh_path)
+gmsh_runner.set_input_file(gmsh_input)
+
+# Setup herd composition
+sim_runners = [gmsh_runner,moose_runner]
+input_modifiers = [gmsh_modifier,moose_modifier]
+
+dir_manager.set_base_dir(Path('examples/'))
+dir_manager.clear_dirs()
+dir_manager.create_dirs()
+
 # Start the herd and create working directories
-herd = MooseHerd(moose_runner,moose_modifier,gmsh_runner,gmsh_modifier)
+herd = MooseHerd(sim_runners,input_modifiers,dir_manager)
+herd.set_num_para_sims(n_para=8)
 # Don't have to clear directories on creation of the herd but we do so here
 # so that directory creation doesn't raise errors
 
-herd.set_base_dir('/home/rspencer/pyfemop/examples/')
-herd.para_opts(n_moose=4,tasks_per_moose=1,threads_per_moose=1,redirect_out=True)
-herd.set_flags(one_dir = False, keep_all = True)
-
-herd.clear_dirs()
-herd.create_dirs()
 
 # Create algorithm. Use SOO GA as only one objective
 algorithm = GA(
@@ -68,9 +90,10 @@ termination = DefaultMultiObjectiveTermination(
 )
 
 # Define an objective function
-def stress_match(data,endtime):
+def stress_match(data,endtime,external_data):
     # Want to get the displacement at final timestep to be close to 0.0446297
-    cur_stress = data['vonmises_stress']
+    
+    cur_stress = data.elem_vars[('vonmises_stress',1)]
     if cur_stress is not None:
         cost = np.abs(np.max(cur_stress)-6.0226E7)
     else:

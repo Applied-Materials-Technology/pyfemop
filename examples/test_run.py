@@ -4,6 +4,7 @@
 #%% Imports
 import numpy as np
 import dill
+from pathlib import Path
 
 from pyfemop.optimisationmanager.optimisationmanager import MooseOptimisationRun
 from pymoo.algorithms.moo.nsga2 import NSGA2
@@ -11,10 +12,14 @@ from pymoo.operators.crossover.sbx import SBX
 from pymoo.operators.mutation.pm import PM
 from pymoo.operators.sampling.rnd import FloatRandomSampling
 from pymoo.algorithms.soo.nonconvex.ga import GA
+from pymoo.termination.default import DefaultMultiObjectiveTermination
+
 from mooseherder.mooseherd import MooseHerd
 from mooseherder.inputmodifier import InputModifier
-from mooseherder.mooseherd import MooseRunner
-from mooseherder.gmshrunner import GmshRunner
+from mooseherder import MooseRunner
+from mooseherder import GmshRunner
+from mooseherder import MooseConfig
+from mooseherder import DirectoryManager
 from mooseherder.exodusreader import ExodusReader
 import copy
 
@@ -27,8 +32,8 @@ from pyfemop.optimisationmanager.costfunctions import ObjectiveFunctionBase
 from pymoo.termination import get_termination
 import pickle
 from matplotlib import pyplot as plt
-from pyfemop.mooseutils.outputreaders import OutputExodusReader
-from pycoatl.spatialdata.importmoose import moose_to_spatialdata
+#from pyfemop.mooseutils.outputreaders import OutputExodusReader
+#from pycoatl.spatialdata.importmoose import moose_to_spatialdata
 import pickle
 #%% Baseline run
 # Setup MOOSE
@@ -273,4 +278,90 @@ with open('/home/rspencer/pyfemop/examples/ex1_Linear_Elastic.pickle', 'rb') as 
     t = dill.load(f)
 # %%
 t = MooseOptimisationRun.restore_backup('/home/rspencer/pyfemop/examples/ex1_Linear_Elastic.pickle')
+# %%
+config = {'main_path': Path.home()/ 'projects/moose',
+        'app_path': Path.home() / 'projects/sloth',
+        'app_name': 'sloth-opt'}
+
+moose_config = MooseConfig(config)
+
+save_path = Path.cwd() / 'moose-config.json'
+moose_config.save_config(save_path)
+
+
+moose_input = Path('/home/rspencer/pyfemop/examples/scripts/ex2_simple_geometry.i')
+moose_modifier = InputModifier(moose_input,'#','')
+
+config_path = Path.cwd() / 'moose-config.json'
+moose_config = MooseConfig().read_config(config_path)
+
+moose_runner = MooseRunner(moose_config)
+moose_runner.set_run_opts(n_tasks = 1,
+                        n_threads = 1,
+                        redirect_out = True)
+
+dir_manager = DirectoryManager(n_dirs=4)
+
+
+# Setup Gmsh
+
+# Setup Gmsh
+gmsh_input = Path('/home/rspencer/pyfemop/examples/scripts/gmsh_2d_simple_geom.geo')
+gmsh_modifier = InputModifier(gmsh_input,'//',';')
+
+gmsh_path = Path.home() / 'src/gmsh/bin/gmsh'
+gmsh_runner = GmshRunner(gmsh_path)
+gmsh_runner.set_input_file(gmsh_input)
+
+# Setup herd composition
+sim_runners = [gmsh_runner,moose_runner]
+input_modifiers = [gmsh_modifier,moose_modifier]
+
+dir_manager.set_base_dir(Path('/home/rspencer/pyfemop/examples'))
+dir_manager.clear_dirs()
+dir_manager.create_dirs()
+
+# Start the herd and create working directories
+herd = MooseHerd(sim_runners,input_modifiers,dir_manager)
+herd.set_num_para_sims(n_para=8)
+
+# Create algorithm. Use SOO GA as only one objective
+algorithm = GA(
+pop_size=12,
+eliminate_duplicates=True,
+save_history = True
+)
+
+# Set termination criteria for optimisation
+#termination = get_termination("n_gen", 2)
+termination = DefaultMultiObjectiveTermination(
+    xtol = 1e-8,
+    cvtol = 1e-6,
+    ftol = 1e-6,
+    period = 5,
+    n_max_gen = 20
+)
+
+# Define an objective function
+def stress_match(data,endtime,external_data):
+    # Want to get the displacement at final timestep to be close to 0.0446297
+    
+    cur_stress = data.elem_vars[('vonmises_stress',1)]
+    if cur_stress is not None:
+        cost = np.abs(np.max(cur_stress)-6.0226E7)
+    else:
+        cost = 1E10                        
+    return cost
+
+# Instance cost function
+c = CostFunction(None,[stress_match],None)
+
+# Assign bounds
+bounds  = {'neckWidth' : [0.5,1.],'e_modulus':[3,4]}
+
+# Create run
+mor = MooseOptimisationRun('ex2_simple_geometry',algorithm,termination,herd,c,bounds)
+
+mor.assign_parameter_list()
+print(mor._parameter_assignment)
 # %%

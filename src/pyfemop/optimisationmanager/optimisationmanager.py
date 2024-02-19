@@ -50,7 +50,7 @@ class MooseOptimisationRun():
                   xl=self._bounds[0],
                   xu=self._bounds[1])
         
-        #self.assign_parameters()
+        self.assign_parameter_list()
         
         # Setup algorithm
         self._algorithm.setup(self._problem,termination=termination)
@@ -84,6 +84,20 @@ class MooseOptimisationRun():
         # Catch the case where we may want to run gmsh but not update it.
         if not self._gmsh_opt_params:
             self._mod_gmsh = False
+
+    def assign_parameter_list(self):
+        """Iterate through the herder modifiers and work out where each parameter goes.
+        """
+        parameter_assignment = []
+        for modifier in self._herd._modifiers:
+            temp_params = [x for x in modifier._vars.keys()]
+            parameter_assignment.append(list(set(temp_params)&set(self._opt_parameters)))
+        
+        self._parameter_assignment = parameter_assignment
+
+
+
+
     def get_backup_path(self):
         """Get a path to save the dill backup to.
 
@@ -159,12 +173,21 @@ class MooseOptimisationRun():
             # The order of parameters will be the same as in the bounds
             
             # Convert x to list of dict
+            # Need to check from the herder what is running what. i.e. what should the format be 
             para_vars = []
             for i in range(x.shape[0]):
-                para_dict = dict()
-                for j,key in enumerate(self._opt_parameters):
-                    para_dict[key] = x[i,j]
-                para_vars.append([para_dict])
+                sub_vars = []
+                p_no = 0
+                for param_list in self._parameter_assignment:
+                    if param_list:
+                        para_dict = dict()
+                        for j,key in enumerate(param_list):
+                            para_dict[key] = x[i,p_no]
+                            p_no+=1
+                    else:
+                        para_dict = None
+                    sub_vars.append(para_dict)
+                para_vars.append(sub_vars)
             
             # For now only modifying moose or gmsh, not both so this should work:
             

@@ -23,6 +23,7 @@ from pymoo.termination import get_termination
 #from pycoatl.spatialdata.importmoose import moose_to_spatialdata
 
 from pymoo.algorithms.soo.nonconvex.ga import GA
+
 def test_moose_only():
     # Setup MOOSE Parameters
     moose_dir = '/home/rspencer/moose'
