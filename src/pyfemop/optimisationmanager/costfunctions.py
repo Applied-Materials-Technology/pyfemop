@@ -6,7 +6,7 @@ import numpy as np
 
 class CostFunction():
 
-    def __init__(self,reader,objective_functions,endtime,dic_filter = False, filter_size=0.2,dic_data = None,ineq_constraints=None,eq_constraints=None):
+    def __init__(self,reader,objective_functions,endtime,external_data = None,ineq_constraints=None,eq_constraints=None):
         """Cost functions to be evaluated. 
         Now will run on .exodus output only. 
 
@@ -36,6 +36,7 @@ class CostFunction():
         else: 
             self.n_eq_constraints =0
         self._endtime = endtime
+        self.external_data = external_data
 
     def evaluate_objectives(self,data):
         """Calculate the cost of each function, to pass back to pymoo
@@ -45,7 +46,7 @@ class CostFunction():
         """
         f= []
         for function in self._objective_functions:
-            f.append(function(data,self._endtime))
+            f.append(function(data,self._endtime,self.external_data))
         return f
     
     def evaluate_constraints(self,data):

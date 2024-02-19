@@ -4,8 +4,11 @@ from pymoo.core.problem import Problem
 from pymoo.problems.static import StaticProblem
 from pymoo.core.evaluator import Evaluator
 import dill
+from pathlib import Path
 
 from mooseherder.mooseherd import MooseHerd
+from mooseherder import SweepReader
+from mooseherder import ExodusReader
 
 import pickle
 import copy
@@ -47,10 +50,14 @@ class MooseOptimisationRun():
                   xl=self._bounds[0],
                   xu=self._bounds[1])
         
-        self.assign_parameters()
+        #self.assign_parameters()
         
         # Setup algorithm
         self._algorithm.setup(self._problem,termination=termination)
+
+        self.sweep_reader = SweepReader(herd._dir_manager,num_para_read=4)
+        
+
 
     def assign_parameters(self):
         """Get lists of parameters for moose and gmsh from the herd 
@@ -83,7 +90,7 @@ class MooseOptimisationRun():
         Returns:
             str: Path to the backup dill.
         """
-        backup_path = self._herd._base_dir + self._name.replace(' ','_').replace('.','_') + '.pickle'
+        backup_path = self._herd._dir_manager._base_dir / (self._name.replace(' ','_').replace('.','_') + '.pickle')
         return backup_path
 
     def backup(self):
@@ -140,8 +147,8 @@ class MooseOptimisationRun():
             print('       Running Optimization Generation {}     '.format(cur_gen))
             print('------------------------------------------------')
             # Ask for the next solution to be implemented
-            self._herd.clear_dirs()
-            self._herd.create_dirs()
+            self._herd._dir_manager.clear_dirs()
+            self._herd._dir_manager.create_dirs()
             pop = self._algorithm.ask()
             
             #Get parameters
@@ -157,31 +164,41 @@ class MooseOptimisationRun():
                 para_dict = dict()
                 for j,key in enumerate(self._opt_parameters):
                     para_dict[key] = x[i,j]
-                para_vars.append(para_dict)
+                para_vars.append([para_dict])
             
-            if self._mod_moose == False: # Don't need to change moose
-                moose_vars = [self._herd._moose_modifier.get_vars()] 
-            else: 
-                moose_vars = [{key: l[key] for key in self._moose_opt_params} for l in para_vars]
+            # For now only modifying moose or gmsh, not both so this should work:
+            
+            #print(para_vars)
+            
+            #if self._mod_moose == False: # Don't need to change moose
+            #    moose_vars = [self._herd._moose_modifier.get_vars()] 
+            #else: 
+            #    moose_vars = [{key: l[key] for key in self._moose_opt_params} for l in para_vars]
 
-            if self._mod_gmsh == False: # Don't need to change gmsh
-                gmsh_vars = None 
-            else: 
-                gmsh_vars = [{key: l[key] for key in self._gmsh_opt_params} for l in para_vars]
-   
-            self._herd.run_para(moose_vars,gmsh_vars)
+            #if self._mod_gmsh == False: # Don't need to change gmsh
+            #    gmsh_vars = None 
+            #else: 
+            #    gmsh_vars = [{key: l[key] for key in self._gmsh_opt_params} for l in para_vars]
+
+            self._herd.run_para(para_vars)
             print('        Run time = {:.2f} seconds.'.format(self._herd.get_sweep_time()))
             print('------------------------------------------------')
             # Read in moose results and get cost. 
             print('                Reading Data                    ')
             print('------------------------------------------------')
             
-            if self._reader is not None:
-                data_list = self._herd.read_results_para_generic(self._reader)
-            else:
-                # For working with examples relying on herder only.
-                vars_to_read = ['disp_y','vonmises_stress']
-                data_list = self._herd.read_results_para(vars_to_read,self._herd._sweep_iter,[1,1])
+            #output_files = self.sweep_reader.read_all_output_keys()
+            data_list = self.sweep_reader.read_results_sequential()
+            #print(data_list)
+
+            # Ultimately want to convert from simdata to spatialdata but for now...
+
+            #if self._reader is not None:
+            #    data_list = self._herd.read_results_para_generic(self._reader)
+            #else:
+            #    # For working with examples relying on herder only.
+            #    vars_to_read = ['disp_y','vonmises_stress']
+            #    data_list = self._herd.read_results_para(vars_to_read,self._herd._sweep_iter,[1,1])
             
             print('            Calculating Objectives              ')
             print('------------------------------------------------')

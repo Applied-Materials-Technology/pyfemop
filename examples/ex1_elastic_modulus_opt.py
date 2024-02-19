@@ -8,40 +8,63 @@ from pymoo.algorithms.soo.nonconvex.ga import GA
 from pymoo.termination import get_termination
 from pymoo.termination.default import DefaultMultiObjectiveTermination
 
+from pathlib import Path
+from mooseherder.mooseconfig import MooseConfig
 from mooseherder.mooseherd import MooseHerd
 from mooseherder.inputmodifier import InputModifier
-from mooseherder.mooseherd import MooseRunner
+from mooseherder import MooseRunner
+from mooseherder import DirectoryManager
 
 from pyfemop.optimisationmanager.optimisationmanager import MooseOptimisationRun
 from pyfemop.optimisationmanager.costfunctions import CostFunction
-from pyfemop.mooseutils.outputreaders import OutputExodusReader
+#from pyfemop.mooseutils.outputreaders import OutputExodusReader
 
 print('------------------------------------------------')
 print('                  Example-1                     ')
 print('          Elastic modulus optimisation          ')
 print('------------------------------------------------')
 
-# Setup MOOSE Parameters
-moose_dir = '/home/rspencer/moose'
-moose_app_dir = '/home/rspencer/proteus'
-moose_app_name = 'proteus-opt'
-moose_input = '/home/rspencer/pyfemop/examples/scripts/ex1_linear_elastic.i'
+# Setup MOOSE Config
+config = {'main_path': Path.home()/ 'projects/moose',
+        'app_path': Path.home() / 'projects/sloth',
+        'app_name': 'sloth-opt'}
 
+moose_config = MooseConfig(config)
+
+save_path = Path.cwd() / 'moose-config.json'
+moose_config.save_config(save_path)
+
+
+moose_input = Path('/home/rspencer/pyfemop/examples/scripts/ex1_linear_elastic.i')
 moose_modifier = InputModifier(moose_input,'#','')
-moose_runner = MooseRunner(moose_dir,moose_app_dir,moose_app_name)
-moose_vars = [moose_modifier.get_vars()]
 
+config_path = Path.cwd() / 'moose-config.json'
+moose_config = MooseConfig().read_config(config_path)
+
+moose_runner = MooseRunner(moose_config)
+moose_runner.set_run_opts(n_tasks = 1,
+                        n_threads = 1,
+                        redirect_out = True)
+
+dir_manager = DirectoryManager(n_dirs=4)
+
+
+
+
+
+# Send all the output to the examples directory and clear out old output
 # Start the herd and create working directories
-herd = MooseHerd(moose_runner,moose_modifier)
 # Don't have to clear directories on creation of the herd but we do so here
 # so that directory creation doesn't raise errors
-
-herd.set_base_dir('/home/rspencer/pyfemop/examples/')
-herd.para_opts(n_moose=4,tasks_per_moose=1,threads_per_moose=1,redirect_out=True)
-herd.set_flags(one_dir = False, keep_all = True)
-
-herd.clear_dirs()
-herd.create_dirs()
+dir_manager.set_base_dir(Path('examples/'))
+dir_manager.clear_dirs()
+dir_manager.create_dirs()
+# Start the herd and create working directories
+herd = MooseHerd([moose_runner],[moose_modifier],dir_manager)
+#herd.set_keep_flag(False)
+# Set the parallelisation options, we have 8 combinations of variables and
+# 4 MOOSE intances running, so 2 runs will be saved in each working directory
+herd.set_num_para_sims(n_para=8)
 
 # Create algorithm. Use SOO GA as only one objective
 algorithm = GA(
@@ -61,10 +84,13 @@ termination = DefaultMultiObjectiveTermination(
 )
 
 # Define an objective function
-def displacement_match(data,endtime):
+def displacement_match(data,endtime,external_data):
     # Want to get the displacement at final timestep to be close to 0.0446297
+    # Using simdata for now.
+    disp_y = data.node_vars['disp_y']
+    #print(np.abs(np.max(disp_y)-0.0446297))
     
-    return np.abs(np.max(data['disp_y'])-0.0446297)
+    return np.abs(np.max(disp_y)-0.0446297)
 
 # Instance cost function
 c = CostFunction(None,[displacement_match],None)
