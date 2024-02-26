@@ -93,15 +93,14 @@ mor.run(1)
 
 
 #%% Test pickling
-pickle_path = '/home/rspencer/mtgo/examples/Run_SD_max_dev_circ.pickle'
-with open(pickle_path,'rb') as f:
-    morl = pickle.load(f,encoding='latin-1')
+pickle_path = '/home/rspencer/pyfemop/examples/ex1_Linear_Elastic.pickle'
+morl = MooseOptimisationRun.restore_backup(pickle_path)
 
 S = morl._algorithm.result().F 
 X = morl._algorithm.result().X
 print(X)
 print(S)
-
+morl.print_status_to_file()
 
 # %%
 S = mor._algorithm.result().F 

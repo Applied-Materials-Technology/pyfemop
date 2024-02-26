@@ -91,7 +91,7 @@ class MooseOptimisationRun():
         parameter_assignment = []
         for modifier in self._herd._modifiers:
             temp_params = [x for x in modifier._vars.keys()]
-            parameter_assignment.append(list(set(temp_params)&set(self._opt_parameters)))
+            parameter_assignment.append([x for x in temp_params if x in self._opt_parameters])
         
         self._parameter_assignment = parameter_assignment
 
@@ -241,7 +241,9 @@ class MooseOptimisationRun():
             print('              Generation Complete               ')
             print('************************************************')
             print('')
+            self.print_status_to_file()
         self.print_status()
+        self.print_status_to_file()
 
     
     def run_optimal(self,pf_nums):
@@ -328,7 +330,114 @@ class MooseOptimisationRun():
                 outstring = outstring[:-1]
                 print(outstring)
                 print('------------------------------------------------')
+    
+    def print_status_to_file(self):
+        """Prints the current status of the optimization to a file. 
+        Designed to be human readable.
+        """
+        F = self._algorithm.result().F 
+        X = self._algorithm.result().X
 
+        outpath = self._herd._dir_manager._base_dir / (self._name.replace(' ','_').replace('.','_') + '.txt')
+        with open(outpath,'w') as f:
+
+            f.write(self.banner())
+            f.write('\n')
+            f.write('************************************************\n')
+            f.write('               Current Status                   \n')
+            f.write('************************************************\n')
+            f.write('Completed Generations: {}\n'.format(self._algorithm.n_gen-1))
+            # Not sure why the below code doesn't work, (Returns 0) but can get n_evals roughly
+            #print('Completed Evaluations: {}'.format(self._algorithm.evaluator.n_eval))
+            f.write('Completed Evaluations: {}\n'.format((self._algorithm.n_gen-1)*self._algorithm.pop_size))
+            # Doesn't seem like there's a way to get which termination tripped on the algorithm
+            if self._algorithm.has_next():
+                f.write('Termination criteria not reached.\n')
+            else:
+                f.write('Algorithm terminated.\n')
+            f.write('------------------------------------------------\n')
+            if len(X.shape)==1:
+                f.write('      Single Objective Optimisation Result      \n')
+                f.write('------------------------------------------------\n')
+                outstring = 'Parameters:\n'
+                for j,key in enumerate(self._opt_parameters):
+                    outstring += '{} = {},\n'.format(key,X[j])
+                
+                outstring+= '\ngives result:\n'
+                for res in F:
+                    outstring+=' {},'.format(res)
+                outstring = outstring[:-1]
+                f.write(outstring+'\n')
+                f.write('------------------------------------------------\n')
+            else:
+                f.write('    Multiobjective Optimisation Pareto Front    \n')
+                f.write('------------------------------------------------\n')
+                for i in range(X.shape[0]):
+                    outstring = 'Parameters: '
+                    for j,key in enumerate(self._opt_parameters):
+                        outstring += '{} = {}, '.format(key,X[i,j])
+                    
+                    outstring+= 'gives results:'
+                    for res in F:
+                        outstring+=' {},'.format(res)
+                    outstring = outstring[:-1]
+                    f.write(outstring+'\n')
+                    #f.write('\n')
+                    f.write('------------------------------------------------\n')
+
+    def print_status_dev(self,to_file = True):
+        """Prints the current status of the optimization to a file. 
+        Designed to be human readable.
+        """
+        F = self._algorithm.result().F 
+        X = self._algorithm.result().X
+
+        #Construct enormous string.
+        mega_string = ''
+        mega_string += self.banner() + '\n'
+        mega_string +='************************************************\n'
+        mega_string +='               Current Status                   \n'
+        mega_string +='************************************************\n'
+        mega_string +='Completed Generations: {}\n'.format(self._algorithm.n_gen-1)
+        mega_string +='Completed Evaluations: {}\n'.format((self._algorithm.n_gen-1)*self._algorithm.pop_size)
+        # Doesn't seem like there's a way to get which termination tripped on the algorithm
+        if self._algorithm.has_next():
+            mega_string +='Termination criteria not reached.\n'
+        else:
+            mega_string +='Algorithm terminated.\n'
+        mega_string +='------------------------------------------------\n'
+        if len(X.shape)==1:
+            mega_string +='      Single Objective Optimisation Result      \n'
+            mega_string +='------------------------------------------------\n'
+            outstring = 'Parameters:\n'
+            for j,key in enumerate(self._opt_parameters):
+                outstring += '{} = {},\n'.format(key,X[j])
+            
+            outstring+= '\ngives result:\n'
+            for res in F:
+                outstring+=' {},'.format(res)
+            outstring = outstring[:-1]
+            mega_string += outstring+'\n'
+            mega_string +='------------------------------------------------\n'
+        else:
+            mega_string +='    Multiobjective Optimisation Pareto Front    \n'
+            mega_string +='------------------------------------------------\n'
+            for i in range(X.shape[0]):
+                outstring = 'Parameters: '
+                for j,key in enumerate(self._opt_parameters):
+                    outstring += '{} = {}, '.format(key,X[i,j])
+                
+                outstring+= 'gives results:'
+                for res in F:
+                    outstring+=' {},'.format(res)
+                outstring = outstring[:-1]
+                mega_string +=outstring+'\n'
+                mega_string +='------------------------------------------------\n'
+        print(mega_string)
+        if to_file:
+            outpath = self._herd._dir_manager._base_dir / (self._name.replace(' ','_').replace('.','_') + '.txt')
+            with open(outpath,'w') as f:
+                f.write(mega_string)
 
     def run_test(self,num_its):
         """Run the optimization for n_its number of generations.

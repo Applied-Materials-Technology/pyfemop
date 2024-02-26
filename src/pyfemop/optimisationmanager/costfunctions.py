@@ -38,7 +38,7 @@ class CostFunction():
         self._endtime = endtime
         self.external_data = external_data
 
-    def evaluate_objectives(self,data):
+    def evaluate_objectives(self,simdata):
         """Calculate the cost of each function, to pass back to pymoo
         
         Returns:
@@ -46,6 +46,11 @@ class CostFunction():
         """
         f= []
         for function in self._objective_functions:
+            # Should retain reasonably generic function
+            if self._reader is not None:
+                data = self._reader(simdata)
+            else:
+                data = simdata
             f.append(function(data,self._endtime,self.external_data))
         return f
     
