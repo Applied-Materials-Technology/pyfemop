@@ -15,7 +15,7 @@ from mooseherder import ExodusReader
 import pickle
 import copy
 import pyvista as pv
-
+from pyfemop.optimisationmanager.costfunctions import CostFunction
 from pycoatl.spatialdata.importsimdata import simdata_to_spatialdata
 
 class OptimisationInputs():
@@ -51,14 +51,14 @@ class OptimisationInputs():
 
 class MooseOptimisationRun():
 
-    def __init__(self,name : str,optimisation_inputs : OptimisationInputs,herd : MooseHerd,cost_function,data_filter = None):
+    def __init__(self,name : str,optimisation_inputs : OptimisationInputs,herd : MooseHerd,cost_function : CostFunction,data_filter = None):
         """Class to contain everything needed for an optimization run 
         with moose. Should be pickle-able.
 
         Args:
             name (str) : string to name the run.
             herd (MooseHerd): MooseHerd instance for the run.
-            costfunction (CostFunction): CostFunction instance.
+            costfunction (CostFunction): CostFunction instance should operate on data or sensitivities as required.
             data_filter : Instance of data filter class or None.
         """
         self._name = name
@@ -80,7 +80,6 @@ class MooseOptimisationRun():
         # Get output reader
         self.sweep_reader = SweepReader(herd._dir_manager,num_para_read=4)
         
-
     def assign_parameter_list(self):
         """Iterate through the herder modifiers and work out where each parameter goes.
         """
@@ -153,11 +152,24 @@ class MooseOptimisationRun():
                 
                 #output_files = self.sweep_reader.read_all_output_keys()
                 data_list = self.sweep_reader.read_results_sequential()
-                     
+                # Convert data list to SpatialData
+                spatial_data_list = []
+                for data in data_list:
+                  spatial_data_list.append(simdata_to_spatialdata(data))
+                
+                # Run Data filter, if there is one.
+                if self._data_filter is not None:
+                    print('             Running Data Filter                ')
+                    print('------------------------------------------------')
+                    filtered_data_list = []
+                    for spatial_data in spatial_data_list:
+                        filtered_data_list.append(self._data_filter.run_filter(spatial_data))
+
                 print('            Calculating Objectives              ')
                 print('------------------------------------------------')
 
-                costs = np.array(self._cost_function.evaluate_parallel(data_list))
+                costs = np.array(self._cost_function.evaluate_parallel(filtered_data_list))
+                
                 F = []
                 for i in range(costs.shape[1]):
                     F.append(costs[:,i])
