@@ -25,7 +25,7 @@ class CostFunction():
         self._objective_functions = objective_functions
         self._ineq_constraints = ineq_constraints
         self._eq_constraints = eq_constraints
-        self.n_obj = len(self._objective_functions)
+        self._n_obj = len(self._objective_functions)
         if ineq_constraints is not None:
             self.n_ieq_constraints = len(ineq_constraints)
         else: 

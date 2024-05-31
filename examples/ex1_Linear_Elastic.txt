@@ -11,15 +11,15 @@ ________________________________________________
 ************************************************
                Current Status                   
 ************************************************
-Completed Generations: 11
-Completed Evaluations: 132
-Algorithm terminated.
+Completed Generations: 2
+Completed Evaluations: 24
+Termination criteria not reached.
 ------------------------------------------------
       Single Objective Optimisation Result      
 ------------------------------------------------
 Parameters:
-e_modulus = 1000206506.9925884,
+e_modulus = 957078950.1806505,
 
 gives result:
- 9.017785990612925e-06
+ 0.001961515170109805
 ------------------------------------------------
