@@ -3,15 +3,15 @@
 #
 import multiprocessing as mp
 import numpy as np
+from pycoatl.spatialdata.spatialdata import SpatialData
 
 class CostFunction():
 
-    def __init__(self,reader,objective_functions,endtime,external_data = None,ineq_constraints=None,eq_constraints=None):
+    def __init__(self,objective_functions : list,endtime: float,external_data = None,ineq_constraints=None,eq_constraints=None):
         """Cost functions to be evaluated. 
-        Now will run on .exodus output only. 
+        Runs on SpatialData instances only
 
         Args:
-            reader (function): Function read the data and get into whatever format. Presumably should be moose_to_spatialdata
             objective_functions (list of functions): Functions to run over data.
             endtime (float): Endtime of the simuation.
             dic_filter (bool, optional): Whether to run a DIC filter on the data. Defaults to False.
@@ -19,9 +19,8 @@ class CostFunction():
             dic_data (SpatialData, optional): Dic data to use in costfunction maybe. Defaults to None.
             ineq_constraints (list of functions, optional): Functions describing inequality constraints. Defaults to None.
             eq_constraints (list of functions, optional): Functions describing equality constraints. Defaults to None.
-        """          
-        #self._data = data
-        self._reader = reader
+        """     
+
         self._objective_functions = objective_functions
         self._ineq_constraints = ineq_constraints
         self._eq_constraints = eq_constraints
@@ -38,7 +37,7 @@ class CostFunction():
         self._endtime = endtime
         self.external_data = external_data
 
-    def evaluate_objectives(self,simdata):
+    def evaluate_objectives(self,data : SpatialData) -> list[float]:
         """Calculate the cost of each function, to pass back to pymoo
         
         Returns:
@@ -47,10 +46,6 @@ class CostFunction():
         f= []
         for function in self._objective_functions:
             # Should retain reasonably generic function
-            if self._reader is not None:
-                data = self._reader(simdata)
-            else:
-                data = simdata
             f.append(function(data,self._endtime,self.external_data))
         return f
     
@@ -149,20 +144,20 @@ def avg_creep(data,endtime):
         cost = 1E6
     return cost
 
-def maximise_strain(data,endtime):
+def maximise_strain(data,endtime,external_data):
     if data is None:
         return 1E6
-    if int(data._time[-1]) != endtime:
+    if int(data.time[-1]) != endtime:
         return 1E6
     
-    return -1*np.nanmax(np.array(data.data_sets[-1]['eyy']))
+    return -1*np.nanmax(data.data_fields['elastic_strain'].data[:,4,-1])
 
-def maximise_strain_deviation(data,endtime):
+def maximise_strain_deviation(data,endtime,external_data):
     if data is None:
         return 1E6
-    if int(data._time[-1]) != endtime:
+    if int(data.time[-1]) != endtime:
         return 1E6
     
-    return -1*np.nanstd(np.array(data.data_sets[-1]['eyy']))
+    return -1*np.nanstd(data.data_fields['elastic_strain'].data[:,4,-1])
 
 

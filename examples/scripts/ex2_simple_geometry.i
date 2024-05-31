@@ -17,7 +17,8 @@ e_modulus = 1e9
 
 [Mesh]
     type = FileMesh
-    file = 'mesh_simple_geom.msh'
+    #file = 'mesh_simple_geom.msh'
+    file = '/home/rspencer/pyfemop/examples/scripts/mesh_simple_geom.msh'
 []
 
 [Modules/TensorMechanics/Master]
@@ -76,6 +77,15 @@ e_modulus = 1e9
     end_time = 5
     dt = 1
 []
+
+[Postprocessors]
+    [./react_y]
+      type = SidesetReaction
+      direction = '0 1 0'
+      stress_tensor = stress
+      boundary = 'Y-Symm'
+    [../] 
+  []
 
 [Outputs]
     exodus = true

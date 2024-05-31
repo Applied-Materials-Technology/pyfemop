@@ -6,6 +6,7 @@ __pycache__/
 # Moose stuff
 examples/moose*
 examples/sim*
+examples/run*
 
 # Anything pickled
 *.pickle

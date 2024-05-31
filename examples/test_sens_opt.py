@@ -21,8 +21,8 @@ from pymoo.algorithms.soo.nonconvex.pso import PSO
 from pymoo.core.problem import Problem
 from pymoo.problems.static import StaticProblem
 
-from pyfemop.optimisationmanager.optimisationmanager_dev import OptimisationInputs
-from pyfemop.optimisationmanager.optimisationmanager_dev import MooseOptimisationRun
+from pyfemop.optimisationmanager.optimisationmanager import OptimisationInputs
+from pyfemop.optimisationmanager.optimisationmanager import MooseOptimisationRun
 from pyfemop.optimisationmanager.costfunctions import CostFunction
 from pycoatl.spatialdata.importsimdata import simdata_to_spatialdata
 

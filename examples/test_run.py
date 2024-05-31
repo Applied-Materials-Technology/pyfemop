@@ -7,11 +7,8 @@ import dill
 from pathlib import Path
 
 from pyfemop.optimisationmanager.optimisationmanager import MooseOptimisationRun
-from pymoo.algorithms.moo.nsga2 import NSGA2
-from pymoo.operators.crossover.sbx import SBX
-from pymoo.operators.mutation.pm import PM
-from pymoo.operators.sampling.rnd import FloatRandomSampling
-from pymoo.algorithms.soo.nonconvex.ga import GA
+from pyfemop.optimisationmanager.optimisationmanager import OptimisationInputs
+from pymoo.algorithms.soo.nonconvex.pso import PSO
 from pymoo.termination.default import DefaultMultiObjectiveTermination
 
 from mooseherder.mooseherd import MooseHerd
@@ -29,68 +26,73 @@ from pyfemop.optimisationmanager.costfunctions import creep_range
 from pyfemop.optimisationmanager.costfunctions import maximise_strain
 from pyfemop.optimisationmanager.costfunctions import maximise_strain_deviation
 from pyfemop.optimisationmanager.costfunctions import ObjectiveFunctionBase
+
+from pycoatl.datafilters.datafilters import FastFilterRegularGrid
+from pycoatl.spatialdata.importsimdata import simdata_to_spatialdata
+
 from pymoo.termination import get_termination
 import pickle
 from matplotlib import pyplot as plt
-#from pyfemop.mooseutils.outputreaders import OutputExodusReader
-#from pycoatl.spatialdata.importmoose import moose_to_spatialdata
-import pickle
+
 #%% Baseline run
 # Setup MOOSE
-moose_dir = '/home/rspencer/moose'
-moose_app_dir = '/home/rspencer/proteus'
-moose_app_name = 'proteus-opt'
-moose_input = '/home/rspencer/mtgo/examples/creep_mesh_test_dev_gpa_hole_plate.i'
+config = {'main_path': Path.home()/ 'projects/moose',
+        'app_path': Path.home() / 'projects/sloth',
+        'app_name': 'sloth-opt'}
 
+moose_config = MooseConfig(config)
+
+save_path = Path.cwd() / 'moose-config.json'
+moose_config.save_config(save_path)
+
+#moose_input = Path('/home/rspencer/pyfemop/examples/scripts/ex1_linear_elastic.i')
+moose_input = Path('/home/rspencer/pyfemop/examples/scripts/ex2_simple_geometry.i')
 moose_modifier = InputModifier(moose_input,'#','')
-moose_runner = MooseRunner(moose_dir,moose_app_dir,moose_app_name)
-moose_vars = [moose_modifier.get_vars()]
+moose_runner = MooseRunner(moose_config)
+moose_runner.set_run_opts(n_tasks = 1,
+                        n_threads = 1,
+                        redirect_out = True)
 
-# Setup Gmsh
-gmsh_path = '/home/rspencer/src/gmsh/bin/gmsh'#os.path.join(user_dir,'moose-workdir/gmsh/bin/gmsh')
-#gmsh_input = '/home/rspencer/mtgo/data/gmsh_script_3d_gpa.geo'
-gmsh_input = '/home/rspencer/mtgo/data/gmsh_hole_plate_creep_alt.geo'
+dir_manager = DirectoryManager(n_dirs=4)
+sim_runners = [moose_runner]
+input_modifiers = [moose_modifier]
 
-gmsh_runner = GmshRunner(gmsh_path)
-gmsh_runner.set_input_file(gmsh_input)
-gmsh_modifier = InputModifier(gmsh_input,'//',';')
+dir_manager.set_base_dir(Path('/home/rspencer/pyfemop/examples/run'))
+dir_manager.clear_dirs()
+dir_manager.create_dirs()
 
-# Start the herd and create working directories
-herd = MooseHerd(moose_runner,moose_modifier,gmsh_runner,gmsh_modifier)
-# Don't have to clear directories on creation of the herd but we do so here
-# so that directory creation doesn't raise errors
-print(herd._base_dir)
-herd.set_base_dir('/home/rspencer/mtgo/examples/')
-herd.para_opts(n_moose=8,tasks_per_moose=1,threads_per_moose=1,redirect_out=True)
-print(herd._base_dir)
-herd.clear_dirs()
-herd.create_dirs()
+herd = MooseHerd(sim_runners,input_modifiers,dir_manager)
+herd.set_num_para_sims(n_para=4)
+herd.set_input_copy_name(['moose'])
 
-algorithm = NSGA2(
-pop_size=8,
-n_offsprings=8,
-sampling=FloatRandomSampling(),
-crossover=SBX(prob=0.9, eta=15),
-mutation=PM(eta=20),
-eliminate_duplicates=True,
-save_history = True
-)
-termination = get_termination("n_gen", 40)
-#c = CostFunction([min_plastic,max_stress],2.16E7)
-reader = OutputExodusReader(True,0.2,data_range='last')
-c = CostFunction(reader,[maximise_strain,maximise_strain_deviation],2.16E7)
+
+
+algorithm = PSO(pop_size=4,save_history=True)
+
+def displacement_match(data,endtime,external_data):
+    # Want to get the displacement at final timestep to be close to 0.0446297
+    # Using simdata for now.
+    disp_y = data.data_fields['displacement'].data[:,1,-1]
+    
+    return np.abs(np.max(disp_y)-0.0446297)
+c = CostFunction([displacement_match],5)
 #bounds  = {'p0' : [1.5,2.5],'p1' : [1.5,2.5],'p2' : [1.5,2.5]}
-bounds  = {'h1x' : [-1.,1],'h1y' : [-0.5,0.5],'h1r' : [0.1,0.9],'h2x' : [-1.,1],'h2y' : [-0.5,0.5],'h2r' : [0.1,0.9]}
-#bounds  =(np.array([1.,1.,1.]),np.array([2.5,2.5,2.5]))
-#bounds  =(np.array([0.35,-0.5]),np.array([0.8,0.5]))
-# Might need to fix the bounds issue, i.e. if model fails then penalise
-#bounds  =(np.array([-1.,-0.5,0.1,-1.,-0.5,0.1]),np.array([1.,0.5,0.9,1.0,0.5,0.9]))
-mor = MooseOptimisationRun('Run_SD_max_dev_circ_T',algorithm,termination,herd,c,bounds)
+bounds  = {'e_modulus' : [5E8,5E9]}
+
+opt_inputs = OptimisationInputs(bounds,algorithm,None)
+filt = FastFilterRegularGrid(0.1,5,exclude_limit=0)
+
+mor = MooseOptimisationRun('Test',opt_inputs,herd,c,filt)
 
 #%%
 mor.run(1)
 
-
+#%%
+curp = Path('/home/rspencer/pyfemop/examples/run/sim-workdir-1/moose-4_out.e')
+exodus_reader = ExodusReader(Path(curp))
+all_sim_data = exodus_reader.read_all_sim_data()
+cur= simdata_to_spatialdata(all_sim_data)
+#%%
 
 #%% Test pickling
 pickle_path = '/home/rspencer/pyfemop/examples/ex1_Linear_Elastic.pickle'

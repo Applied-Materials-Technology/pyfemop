@@ -77,6 +77,15 @@ e_modulus = 1e9
     dt = 1
 []
 
+[Postprocessors]
+  [./react_y]
+    type = SidesetReaction
+    direction = '0 1 0'
+    stress_tensor = stress
+    boundary = 'bottom'
+  [../] 
+[]
+
 [Outputs]
     exodus = true
 []
