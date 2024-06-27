@@ -156,7 +156,7 @@ class MooseOptimisationRun():
                 # Convert data list to SpatialData
                 spatial_data_list = []
                 for data in data_list:
-                  spatial_data_list.append(simdata_to_spatialdata(data[0]))
+                  spatial_data_list.append(simdata_to_spatialdata(data[len(self._herd._runners)]))
                 
                 # Run Data filter, if there is one.
                 if self._data_filter is not None:
@@ -207,12 +207,12 @@ class MooseOptimisationRun():
                     data_list = self.sweep_reader.read_results_sequential()
                     
                     print('Calculate costs')
-                    base_file = simdata_to_spatialdata(data_list[0])
+                    base_file = simdata_to_spatialdata(data_list[len(self._herd._runners)])
                     base_file.get_equivalent_strain('mechanical_strain')
 
                     sens = []
                     for simdata in data_list[1:]:
-                        alt_file = simdata_to_spatialdata(simdata[0])
+                        alt_file = simdata_to_spatialdata(simdata[len(self._herd._runners)])
                         alt_file.get_equivalent_strain('mechanical_strain')
                         sens.append(base_file.data_fields['equiv_strain'].data[:,0,-1]-alt_file.data_fields['equiv_strain'].data[:,0,-1])
                     
