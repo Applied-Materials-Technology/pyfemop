@@ -18,6 +18,8 @@ import pyvista as pv
 from pyfemop.optimisationmanager.costfunctions import CostFunction
 from pycoatl.spatialdata.importsimdata import simdata_to_spatialdata
 
+import multiprocessing as mp
+
 class OptimisationInputs():
 
     def __init__(self,parameter_space : dict ,algorithm : Algorithm ,termination : Termination, run_type = 'default', base_params : dict = None):
@@ -162,10 +164,20 @@ class MooseOptimisationRun():
                 if self._data_filter is not None:
                     print('             Running Data Filter                ')
                     print('------------------------------------------------')
-                    filtered_data_list = []
-                    for spatial_data in spatial_data_list:
-                        filtered_data_list.append(self._data_filter.run_filter(spatial_data))
-                    spatial_data_list = filtered_data_list
+                    # Old code, runs sequential
+                    #filtered_data_list = []
+                    #for spatial_data in spatial_data_list:
+                    #    filtered_data_list.append(self._data_filter.run_filter(spatial_data))
+                    #spatial_data_list = filtered_data_list
+                    # New  runs parallel
+                    n_threads = len(spatial_data_list)
+
+                    with mp.Pool(n_threads) as pool:
+                        processes = []
+                        for data in spatial_data_list:
+                            processes.append(pool.apply_async(self._data_filter.run_filter, (data,))) # tuple is important, otherwise it unpacks strings for some reason
+                        f_list=[pp.get() for pp in processes]
+                    spatial_data_list = f_list
                 print('            Calculating Objectives              ')
                 print('------------------------------------------------')
 
