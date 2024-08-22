@@ -387,7 +387,7 @@ class MooseOptimisationRun():
         X = self._algorithm.result().X
 
         outpath = self._herd._dir_manager._base_dir / (self._name.replace(' ','_').replace('.','_') + '.txt')
-        with open(outpath,'w') as f:
+        with open(outpath,'a') as f:
 
             f.write(self.banner())
             f.write('\n')
