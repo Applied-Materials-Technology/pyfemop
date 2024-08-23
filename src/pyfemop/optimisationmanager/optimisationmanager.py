@@ -190,15 +190,16 @@ class MooseOptimisationRun():
             elif self._optimisation_inputs._run_type == 'sensitivity':
                 # Sensitivity based run
                 all_costs = np.empty(x.shape[0]) 
+                sweep_params = list([])
                 for i in range(x.shape[0]):
                     self._herd._dir_manager.clear_dirs()
                     self._herd._dir_manager.create_dirs()
                     #Check params are valid
-                    if x[i][0] + x[i][1] < 1:
-                        all_costs[i]=1000
-                        continue
+                    #if x[i][0] + x[i][1] < 1:
+                    #    all_costs[i]=1000
+                    #    continue
                     print('Populate sweep Parameters')
-                    sweep_params = list([])
+                    
                     
                     # Assumes there's a neml2 input for now...
                     # Could be the case that there's 2 modifiers, one for gmsh and one for moose
@@ -213,27 +214,46 @@ class MooseOptimisationRun():
                         new_dict[p] = self._optimisation_inputs._base_params[p]*1.1
                         sweep_params.append([gmsh_params,None,new_dict])
                     
-                    print(sweep_params)
-                    #print('Run the herd')
-                    self._herd.run_para(sweep_params)
-                    data_list = self.sweep_reader.read_results_sequential()
-                    
-                    print('Calculate costs')
-                    base_file = simdata_to_spatialdata(data_list[-1])
+                print(sweep_params)
+                #print('Run the herd')
+                self._herd.run_para(sweep_params)
+                data_list = self.sweep_reader.read_results_sequential()
+
+                spatial_data_list = []
+                for data in data_list:
+                    spatial_data_list.append(simdata_to_spatialdata(data[-1]))
+                
+                print('Calculate costs')
+                # First step is to batch runs into individual sensitivity runs. 
+                # The calculate the sensitivity of each batch
+                nr= len(self._optimisation_inputs._base_params)
+                sens = []
+                for i in range(x.shape[0]):
+                    batch = spatial_data_list[i*(nr+1):i*(nr+1)+(nr+1)]
+                    print(batch)
+                    sens_temp = []
+                    base_file = batch[0]#simdata_to_spatialdata(spatial_data_list[-1])
                     base_file.get_equivalent_strain('mechanical_strain')
 
-                    sens = []
-                    for simdata in data_list[1:]:
-                        alt_file = simdata_to_spatialdata(simdata[-1])
+                    for alt_file in batch[1:]:
                         alt_file.get_equivalent_strain('mechanical_strain')
-                        sens.append(base_file.data_fields['equiv_strain'].data[:,0,-1]-alt_file.data_fields['equiv_strain'].data[:,0,-1])
+                        sens_temp.append(base_file.data_fields['equiv_strain'].data[:,0,-1]-alt_file.data_fields['equiv_strain'].data[:,0,-1])
                     
-                    sens = np.array(sens)
-                    
-                    mean_sens = np.mean(np.abs(sens),axis=1)
-                    cost = -np.sum(mean_sens/np.max(mean_sens))
-                    all_costs[i] = cost 
-                    F=all_costs.tolist()    
+                    #sens.append(np.mean(np.abs(np.array(sens_temp)),axis=1))
+                    # Using RMS to make everything positive.
+                    sens.append(np.sqrt(np.ravel(np.mean(np.array(sens_temp)**2,axis=1))))
+
+                # Calculate actual cost (based on similarity of mean sensitivities)
+                costs = []
+                for tsens in sens:
+                    #tsens = [1.2,10,1,1]
+                    sqsum = 0
+                    for i,val in enumerate(tsens):
+                        for negval in tsens[1+i:]:
+                            sqsum+=np.power(val-negval,2)
+
+                    costs.append(sqsum/np.sum(np.power(tsens,2)))
+                F=costs  
 
             # Give the problem the updated costs. 
             static = StaticProblem(self._problem,F=F)
