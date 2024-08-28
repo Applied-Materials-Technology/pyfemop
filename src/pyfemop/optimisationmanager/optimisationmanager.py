@@ -240,10 +240,10 @@ class MooseOptimisationRun():
                     sens_temp = []
                     base_file = batch[0]#simdata_to_spatialdata(spatial_data_list[-1])
                     base_file.get_equivalent_strain('mechanical_strain')
-                    if base_file.time != self._cost_function._endtime:
+                    if base_file.time[-1] != self._cost_function._endtime:
                         run_fail_flag = True
                     for alt_file in batch[1:]:
-                        if alt_file.time != self._cost_function._endtime:
+                        if alt_file.time[-1] != self._cost_function._endtime:
                             run_fail_flag = True
                         alt_file.get_equivalent_strain('mechanical_strain')
                         sens_temp.append(base_file.data_fields['equiv_strain'].data[:,0,-1]-alt_file.data_fields['equiv_strain'].data[:,0,-1])
