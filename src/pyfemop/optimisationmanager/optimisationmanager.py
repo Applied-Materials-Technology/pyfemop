@@ -217,6 +217,11 @@ class MooseOptimisationRun():
                 print(sweep_params)
                 #print('Run the herd')
                 self._herd.run_para(sweep_params)
+                print('        Run time = {:.2f} seconds.'.format(self._herd.get_sweep_time()))
+                print('------------------------------------------------')
+                # Read in moose results and get cost. 
+                print('                Reading Data                    ')
+                print('------------------------------------------------')
                 data_list = self.sweep_reader.read_results_sequential()
 
                 spatial_data_list = []
@@ -229,19 +234,26 @@ class MooseOptimisationRun():
                 nr= len(self._optimisation_inputs._base_params)
                 sens = []
                 for i in range(x.shape[0]):
+                    run_fail_flag = False
                     batch = spatial_data_list[i*(nr+1):i*(nr+1)+(nr+1)]
                     print(batch)
                     sens_temp = []
                     base_file = batch[0]#simdata_to_spatialdata(spatial_data_list[-1])
                     base_file.get_equivalent_strain('mechanical_strain')
-
+                    if base_file.time != self._cost_function._endtime:
+                        run_fail_flag = True
                     for alt_file in batch[1:]:
+                        if alt_file.time != self._cost_function._endtime:
+                            run_fail_flag = True
                         alt_file.get_equivalent_strain('mechanical_strain')
                         sens_temp.append(base_file.data_fields['equiv_strain'].data[:,0,-1]-alt_file.data_fields['equiv_strain'].data[:,0,-1])
                     
                     #sens.append(np.mean(np.abs(np.array(sens_temp)),axis=1))
                     # Using RMS to make everything positive.
-                    sens.append(np.sqrt(np.ravel(np.mean(np.array(sens_temp)**2,axis=1))))
+                    if not run_fail_flag:
+                        sens.append(np.sqrt(np.ravel(np.mean(np.array(sens_temp)**2,axis=1))))
+                    else:
+                        sens.append(1E6)
 
                 # Calculate actual cost (based on similarity of mean sensitivities)
                 costs = []
