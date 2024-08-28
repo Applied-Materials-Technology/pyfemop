@@ -236,7 +236,7 @@ class MooseOptimisationRun():
                 for i in range(x.shape[0]):
                     run_fail_flag = False
                     batch = spatial_data_list[i*(nr+1):i*(nr+1)+(nr+1)]
-                    print(batch)
+                    #print(batch)
                     sens_temp = []
                     base_file = batch[0]#simdata_to_spatialdata(spatial_data_list[-1])
                     base_file.get_equivalent_strain('mechanical_strain')
