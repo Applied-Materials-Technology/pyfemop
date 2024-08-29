@@ -233,40 +233,42 @@ class MooseOptimisationRun():
                 # The calculate the sensitivity of each batch
                 nr= len(self._optimisation_inputs._base_params)
                 sens = []
+                run_fails = np.full(x.shape[0],False)
                 for i in range(x.shape[0]):
-                    run_fail_flag = False
+                    
                     batch = spatial_data_list[i*(nr+1):i*(nr+1)+(nr+1)]
                     #print(batch)
                     sens_temp = []
                     base_file = batch[0]#simdata_to_spatialdata(spatial_data_list[-1])
                     base_file.get_equivalent_strain('mechanical_strain')
                     if base_file.time[-1] != self._cost_function._endtime:
-                        run_fail_flag = True
+                        run_fails[i] = True
                     for alt_file in batch[1:]:
                         if alt_file.time[-1] != self._cost_function._endtime:
-                            run_fail_flag = True
+                            run_fails[i] = True
                         alt_file.get_equivalent_strain('mechanical_strain')
                         sens_temp.append(base_file.data_fields['equiv_strain'].data[:,0,-1]-alt_file.data_fields['equiv_strain'].data[:,0,-1])
                     
                     #sens.append(np.mean(np.abs(np.array(sens_temp)),axis=1))
                     # Using RMS to make everything positive.
-                    if not run_fail_flag:
-                        sens.append(np.sqrt(np.ravel(np.mean(np.array(sens_temp)**2,axis=1))))
-                    else:
-                        sens.append(1E6)
+                    sens.append(np.sqrt(np.ravel(np.mean(np.array(sens_temp)**2,axis=1))))
+                    
 
                 # Calculate actual cost (based on similarity of mean sensitivities)
                 costs = []
-                for tsens in sens:
-                    #tsens = [1.2,10,1,1]
-                    sqsum = 0
-                    if tsens != 1E6:
-                        for i,val in enumerate(tsens):
-                            for negval in tsens[1+i:]:
-                                sqsum+=np.power(val-negval,2)
-                        costs.append(sqsum/np.sum(np.power(tsens,2)))
-                    else: 
+                for count,tsens in enumerate(sens):
+                    
+                    # Check if run has failed
+                    if not run_fails[count]:
                         costs.append(1E6)
+                        continue
+                    sqsum = 0
+                    for i,val in enumerate(tsens):
+                        
+                        for negval in tsens[1+i:]:
+                            sqsum+=np.power(val-negval,2)
+                    costs.append(sqsum/np.sum(np.power(tsens,2)))
+
                 F=costs  
 
             # Give the problem the updated costs. 
@@ -447,7 +449,7 @@ class MooseOptimisationRun():
                 
                 outstring+= '\ngives result:\n'
                 for res in F:
-                    outstring+=' {},'.format(res)
+                    outstring+=' {};'.format(res)
                 outstring = outstring[:-1]
                 f.write(outstring+'\n')
                 f.write('------------------------------------------------\n')
@@ -457,11 +459,11 @@ class MooseOptimisationRun():
                 for i in range(X.shape[0]):
                     outstring = 'Parameters: '
                     for j,key in enumerate(self._optimisation_inputs._opt_parameters):
-                        outstring += '{} = {}, '.format(key,X[i,j])
+                        outstring += '{} = {}; '.format(key,X[i,j])
                     
                     outstring+= 'gives results:'
                     for res in F:
-                        outstring+=' {},'.format(res)
+                        outstring+=' {};'.format(res)
                     outstring = outstring[:-1]
                     f.write(outstring+'\n')
                     #f.write('\n')
