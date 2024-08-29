@@ -259,7 +259,7 @@ class MooseOptimisationRun():
                 for count,tsens in enumerate(sens):
                     
                     # Check if run has failed
-                    if not run_fails[count]:
+                    if run_fails[count]:
                         costs.append(1E6)
                         continue
                     sqsum = 0
@@ -268,7 +268,7 @@ class MooseOptimisationRun():
                         for negval in tsens[1+i:]:
                             sqsum+=np.power(val-negval,2)
                     costs.append(sqsum/np.sum(np.power(tsens,2)))
-
+                
                 F=costs  
 
             # Give the problem the updated costs. 
