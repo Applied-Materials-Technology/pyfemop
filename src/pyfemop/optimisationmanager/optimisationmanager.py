@@ -260,11 +260,13 @@ class MooseOptimisationRun():
                 for tsens in sens:
                     #tsens = [1.2,10,1,1]
                     sqsum = 0
-                    for i,val in enumerate(tsens):
-                        for negval in tsens[1+i:]:
-                            sqsum+=np.power(val-negval,2)
-
-                    costs.append(sqsum/np.sum(np.power(tsens,2)))
+                    if tsens != 1E6:
+                        for i,val in enumerate(tsens):
+                            for negval in tsens[1+i:]:
+                                sqsum+=np.power(val-negval,2)
+                        costs.append(sqsum/np.sum(np.power(tsens,2)))
+                    else: 
+                        costs.append(1E6)
                 F=costs  
 
             # Give the problem the updated costs. 
