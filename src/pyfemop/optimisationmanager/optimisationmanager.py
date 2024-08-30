@@ -218,7 +218,7 @@ class MooseOptimisationRun():
                                 para_dict = None
                             sub_vars.append(para_dict)
                         para_vars.append(sub_vars)
-                    print(para_vars)
+                    #print(para_vars)
 
                     sweep_params = []
                     for l in para_vars:
@@ -228,6 +228,7 @@ class MooseOptimisationRun():
                         for p in self._optimisation_inputs._base_params:
                             new_dict = self._optimisation_inputs._base_params.copy()
                             new_dict[p] = self._optimisation_inputs._base_params[p]*1.1
+                            r = l.copy()
                             r[-1] = new_dict
                             sweep_params.append(r)
                     
@@ -284,7 +285,10 @@ class MooseOptimisationRun():
                         
                         for negval in tsens[1+i:]:
                             sqsum+=np.power(val-negval,2)
-                    costs.append(sqsum/np.sum(np.power(tsens,2)))
+                    if sqsum == 0: # Check that all sensitivities aren't zero
+                        costs.append(1E6)
+                    else:
+                        costs.append(sqsum/np.sum(np.power(tsens,2)))
                 
                 F=costs  
 
