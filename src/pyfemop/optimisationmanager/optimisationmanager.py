@@ -204,15 +204,32 @@ class MooseOptimisationRun():
                     # Assumes there's a neml2 input for now...
                     # Could be the case that there's 2 modifiers, one for gmsh and one for moose
                     # Easy fix would just be to check # of input modifiers in herd, but seems lazy
-                    gmsh_params = dict()
-                    for j,key in enumerate(self._optimisation_inputs._parameter_space):
-                        gmsh_params[key] = x[i,j]
-                    #gmsh_params = {'p0':x[i][0],'p1':x[i][1]}
-                    sweep_params.append([gmsh_params,None,self._optimisation_inputs._base_params])
-                    for p in self._optimisation_inputs._base_params:
-                        new_dict = self._optimisation_inputs._base_params.copy()
-                        new_dict[p] = self._optimisation_inputs._base_params[p]*1.1
-                        sweep_params.append([gmsh_params,None,new_dict])
+                    para_vars = []
+                    for i in range(x.shape[0]):
+                        sub_vars = []
+                        p_no = 0
+                        for param_list in self._parameter_assignment:
+                            if param_list:
+                                para_dict = dict()
+                                for j,key in enumerate(param_list):
+                                    para_dict[key] = x[i,p_no]
+                                    p_no+=1
+                            else:
+                                para_dict = None
+                            sub_vars.append(para_dict)
+                        para_vars.append(sub_vars)
+                    print(para_vars)
+
+                    sweep_params = []
+                    for l in para_vars:
+                        r = l.copy()
+                        r[-1] = self._optimisation_inputs._base_params.copy()
+                        sweep_params.append(r)
+                        for p in self._optimisation_inputs._base_params:
+                            new_dict = self._optimisation_inputs._base_params.copy()
+                            new_dict[p] = self._optimisation_inputs._base_params[p]*1.1
+                            r[-1] = new_dict
+                            sweep_params.append(r)
                     
                 print(sweep_params)
                 #print('Run the herd')
