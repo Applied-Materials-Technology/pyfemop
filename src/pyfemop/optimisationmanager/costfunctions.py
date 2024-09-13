@@ -71,6 +71,14 @@ class CostFunction():
             f_list=[pp.get() for pp in processes]
         
         return f_list
+    
+    def evaluate_sequential(self,data_list):
+        
+        f_list = []
+        for data in data_list:
+            f_list.append(self.evaluate_objectives(data)) # tuple is important, otherwise it unpacks strings for some reason
+
+        return f_list
 
 
 class ObjectiveFunctionBase():

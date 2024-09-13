@@ -271,8 +271,6 @@ class MooseOptimisationRun():
                     # Using RMS to make everything positive.
                     sens.append(np.sqrt(np.ravel(np.mean(np.array(sens_temp)**2,axis=1))))
                     
-
-                # Calculate actual cost (based on similarity of mean sensitivities)
                 costs = []
                 for count,tsens in enumerate(sens):
                     
@@ -280,15 +278,29 @@ class MooseOptimisationRun():
                     if run_fails[count]:
                         costs.append(1E6)
                         continue
-                    sqsum = 0
-                    for i,val in enumerate(tsens):
-                        
-                        for negval in tsens[1+i:]:
-                            sqsum+=np.power(val-negval,2)
-                    if sqsum == 0: # Check that all sensitivities aren't zero
-                        costs.append(1E6)
-                    else:
-                        costs.append(sqsum/np.sum(np.power(tsens,2)))
+
+                    costs.append(-np.sqrt(np.sum(np.power(tsens,2))))
+            
+                #costs = np.array(self._cost_function.evaluate_sequential(spatial_data_list))
+                
+
+                # Calculate actual cost (based on similarity of mean sensitivities)
+                #costs = []
+                #for count,tsens in enumerate(sens):
+                    
+                    # Check if run has failed
+                #    if run_fails[count]:
+                #        costs.append(1E6)
+                #        continue
+                #    sqsum = 0
+                #    for i,val in enumerate(tsens):
+                #        
+                #        for negval in tsens[1+i:]:
+                #            sqsum+=np.power(val-negval,2)
+                #    if sqsum == 0: # Check that all sensitivities aren't zero
+                #        costs.append(1E6)
+                #    else:
+                #        costs.append(sqsum/np.sum(np.power(tsens,2)))
                 
                 F=costs  
 
