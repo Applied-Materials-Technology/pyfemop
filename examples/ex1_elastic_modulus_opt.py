@@ -16,6 +16,7 @@ from mooseherder import MooseRunner
 from mooseherder import DirectoryManager
 
 from pyfemop.optimisationmanager.optimisationmanager import MooseOptimisationRun
+from pyfemop.optimisationmanager.optimisationmanager import OptimisationInputs
 from pyfemop.optimisationmanager.costfunctions import CostFunction
 #from pyfemop.mooseutils.outputreaders import OutputExodusReader
 
@@ -76,10 +77,10 @@ save_history = True
 # Set termination criteria for optimisation
 #termination = get_termination("n_gen", 2)
 termination = DefaultMultiObjectiveTermination(
-    xtol = 1e-8,
-    cvtol = 1e-6,
-    ftol = 1e-6,
-    period = 5,
+    xtol = 1e-3,
+    cvtol = 1e-3,
+    ftol = 1e-3,
+    period = 3,
     n_max_gen = 20
 )
 
@@ -87,19 +88,21 @@ termination = DefaultMultiObjectiveTermination(
 def displacement_match(data,endtime,external_data):
     # Want to get the displacement at final timestep to be close to 0.0446297
     # Using simdata for now.
-    disp_y = data.node_vars['disp_y']
+    #disp_y = data.node_vars['disp_y']
+    disp_y = data.data_fields['displacement'].data[:,1,-1]
     #print(np.abs(np.max(disp_y)-0.0446297))
     
     return np.abs(np.max(disp_y)-0.0446297)
 
 # Instance cost function
-c = CostFunction(None,[displacement_match],None)
+c = CostFunction([displacement_match],None)
 
 # Assign bounds
 bounds  = {'e_modulus' : [0.5E9,1.5E9]}
+opt_inputs = OptimisationInputs(bounds,algorithm,None)
 
 # Create run
-mor = MooseOptimisationRun('ex1_Linear_Elastic',algorithm,termination,herd,c,bounds)
+mor = MooseOptimisationRun('ex1_Linear_Elastic',opt_inputs,herd,c)
 
 # Do 1 run.
 mor.run(20)

@@ -281,7 +281,7 @@ class MooseOptimisationRun():
 
                     costs.append(-np.sqrt(np.sum(np.power(tsens,2))))
             
-                #costs = np.array(self._cost_function.evaluate_sequential(spatial_data_list))
+                #costs = self._cost_function.evaluate_sequential(spatial_data_list)
                 
 
                 # Calculate actual cost (based on similarity of mean sensitivities)
@@ -379,7 +379,7 @@ class MooseOptimisationRun():
             print('------------------------------------------------')
             outstring = 'Parameters:\n'
             for j,key in enumerate(self._optimisation_inputs._opt_parameters):
-                outstring += '{} = {},\n'.format(key,X[j])
+                outstring += '{} = {};\n'.format(key,X[j])
             
             outstring+= '\ngives result:\n'
             for res in F:
@@ -393,7 +393,7 @@ class MooseOptimisationRun():
             for i in range(X.shape[0]):
                 outstring = 'Parameters: '
                 for j,key in enumerate(self._optimisation_inputs._opt_parameters):
-                    outstring += '{} = {}, '.format(key,X[i,j])
+                    outstring += '{} = {};'.format(key,X[i,j])
                 
                 outstring+= 'gives results:'
                 for res in F:
@@ -478,7 +478,7 @@ class MooseOptimisationRun():
                 f.write('------------------------------------------------\n')
                 outstring = 'Parameters:\n'
                 for j,key in enumerate(self._optimisation_inputs._opt_parameters):
-                    outstring += '{} = {},\n'.format(key,X[j])
+                    outstring += '{} = {};\n'.format(key,X[j])
                 
                 outstring+= '\ngives result:\n'
                 for res in F:
