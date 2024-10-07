@@ -170,7 +170,7 @@ class MooseOptimisationRun():
                     #    filtered_data_list.append(self._data_filter.run_filter(spatial_data))
                     #spatial_data_list = filtered_data_list
                     # New  runs parallel
-                    n_threads = len(spatial_data_list)
+                    n_threads = mp.cpu_count() - 1#len(spatial_data_list)
 
                     with mp.Pool(n_threads) as pool:
                         processes = []
@@ -246,30 +246,49 @@ class MooseOptimisationRun():
                 for data in data_list:
                     spatial_data_list.append(simdata_to_spatialdata(data[-1]))
                 
-                print('Calculate costs')
+                #print('Calculate costs')
                 # First step is to batch runs into individual sensitivity runs. 
                 # The calculate the sensitivity of each batch
                 nr= len(self._optimisation_inputs._base_params)
                 sens = []
                 run_fails = np.full(x.shape[0],False)
+
+                # Assemble the sensitivity runs into batches. (i.e. all runs on same geometry)
+                batch_list = []
                 for i in range(x.shape[0]):
-                    
-                    batch = spatial_data_list[i*(nr+1):i*(nr+1)+(nr+1)]
+                    batch_list.append(spatial_data_list[i*(nr+1):i*(nr+1)+(nr+1)])
+                
+                strain_field = 'mechanical_strain'
+                # Here should go the data filter.
+                if self._data_filter is not None:
+                    print('             Running Data Filter                ')
+                    print('------------------------------------------------')
+                    strain_field = 'filtered_strain'
+                    n_threads = mp.cpu_count() - 1#len(spatial_data_list)
+
+                    with mp.Pool(n_threads) as pool:
+                        processes = []
+                        for batch in batch_list:
+                            processes.append(pool.apply_async(self._data_filter.run_filter, (batch,))) # tuple is important, otherwise it unpacks strings for some reason
+                        f_list=[pp.get() for pp in processes]
+                    batch_list = f_list
+
                     #print(batch)
+                for batch in batch_list:
                     sens_temp = []
                     base_file = batch[0]#simdata_to_spatialdata(spatial_data_list[-1])
-                    base_file.get_equivalent_strain('mechanical_strain')
+                    base_file.get_equivalent_strain(strain_field)
                     if base_file.time[-1] != self._cost_function._endtime:
                         run_fails[i] = True
                     for alt_file in batch[1:]:
                         if alt_file.time[-1] != self._cost_function._endtime:
                             run_fails[i] = True
-                        alt_file.get_equivalent_strain('mechanical_strain')
+                        alt_file.get_equivalent_strain(strain_field)
                         sens_temp.append(base_file.data_fields['equiv_strain'].data[:,0,-1]-alt_file.data_fields['equiv_strain'].data[:,0,-1])
                     
                     #sens.append(np.mean(np.abs(np.array(sens_temp)),axis=1))
                     # Using RMS to make everything positive.
-                    sens.append(np.sqrt(np.ravel(np.mean(np.array(sens_temp)**2,axis=1))))
+                    sens.append(np.sqrt(np.ravel(np.nanmean(np.array(sens_temp)**2,axis=1))))
                     
                 costs = []
                 for count,tsens in enumerate(sens):
