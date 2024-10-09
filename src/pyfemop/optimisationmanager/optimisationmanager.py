@@ -274,7 +274,7 @@ class MooseOptimisationRun():
                     batch_list = f_list
 
                     #print(batch)
-                for batch in batch_list:
+                for i,batch in enumerate(batch_list):
                     sens_temp = []
                     base_file = batch[0]#simdata_to_spatialdata(spatial_data_list[-1])
                     base_file.get_equivalent_strain(strain_field)
