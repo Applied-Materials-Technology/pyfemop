@@ -385,8 +385,8 @@ class MooseOptimisationRun():
         print('************************************************')
         print('Completed Generations: {}'.format(self._algorithm.n_gen-1))
         # Not sure why the below code doesn't work, (Returns 0) but can get n_evals roughly
-        #print('Completed Evaluations: {}'.format(self._algorithm.evaluator.n_eval))
-        print('Completed Evaluations: {}'.format((self._algorithm.n_gen-1)*self._algorithm.pop_size))
+        print('Completed Evaluations: {}'.format(self._algorithm.evaluator.n_eval))
+        #print('Completed Evaluations: {}'.format((self._algorithm.n_gen-1)*self._algorithm.pop_size))
         # Doesn't seem like there's a way to get which termination tripped on the algorithm
         if self._algorithm.has_next():
             print('Termination criteria not reached.')
@@ -484,8 +484,8 @@ class MooseOptimisationRun():
             f.write('************************************************\n')
             f.write('Completed Generations: {}\n'.format(self._algorithm.n_gen-1))
             # Not sure why the below code doesn't work, (Returns 0) but can get n_evals roughly
-            #print('Completed Evaluations: {}'.format(self._algorithm.evaluator.n_eval))
-            f.write('Completed Evaluations: {}\n'.format((self._algorithm.n_gen-1)*self._algorithm.pop_size))
+            f.write('Completed Evaluations: {}'.format(self._algorithm.evaluator.n_eval))
+            #f.write('Completed Evaluations: {}\n'.format((self._algorithm.n_gen-1)*self._algorithm.pop_size))
             # Doesn't seem like there's a way to get which termination tripped on the algorithm
             if self._algorithm.has_next():
                 f.write('Termination criteria not reached.\n')

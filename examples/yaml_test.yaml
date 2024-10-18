@@ -1,0 +1,29 @@
+bounds:
+  alpha:
+  - 1.68e-09
+  - 2.06e-09
+  beta:
+  - 0.018
+  - 0.022
+  dam_a:
+  - 465.3
+  - 568.7
+  dam_phi:
+  - 2.25
+  - 2.75
+  dam_zeta:
+  - 11.25
+  - 13.75
+external_data: /home/rspencer/moose_work/Geometry_Optimisation/mat_opt/baseline_mat.e
+gmsh_input: /home/rspencer/moose_work/Geometry_Optimisation/mat_opt/x_plane_circ.geo
+gmsh_path: /home/rspencer/src/gmsh/bin/gmsh
+moose_config:
+  app_name: sloth-opt
+  app_path: /home/rspencer/projects/sloth
+  main_path: /home/rspencer/projects/moose
+moose_input: /home/rspencer/moose_work/Geometry_Optimisation/mat_opt/creep_x_plane_circ_sinh_3d_dmg_nl.i
+n_dirs: 2
+n_generations: 1
+n_para: 2
+run_dir: /home/rspencer/moose_work/Geometry_Optimisation/mat_opt/Run
+run_name: XC_Mat_1
