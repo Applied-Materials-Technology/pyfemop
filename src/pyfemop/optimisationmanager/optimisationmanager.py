@@ -484,7 +484,7 @@ class MooseOptimisationRun():
             f.write('************************************************\n')
             f.write('Completed Generations: {}\n'.format(self._algorithm.n_gen-1))
             # Not sure why the below code doesn't work, (Returns 0) but can get n_evals roughly
-            f.write('Completed Evaluations: {}'.format(self._algorithm.evaluator.n_eval))
+            f.write('Completed Evaluations: {}\n'.format(self._algorithm.evaluator.n_eval))
             #f.write('Completed Evaluations: {}\n'.format((self._algorithm.n_gen-1)*self._algorithm.pop_size))
             # Doesn't seem like there's a way to get which termination tripped on the algorithm
             if self._algorithm.has_next():
