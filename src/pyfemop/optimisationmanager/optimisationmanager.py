@@ -332,6 +332,7 @@ class MooseOptimisationRun():
             print('************************************************')
             print('')
             self.print_status_to_file()
+        self.backup()
         self.print_status()
         self.print_status_to_file()
 
